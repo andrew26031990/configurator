@@ -1,0 +1,98 @@
+@media screen and (max-width: 1440px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 1240px) {
+    .phone-label {
+        display: none;
+    }
+
+    .header {
+        &__contacts {
+            text-align: right;
+        }
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .hero {
+        &__caption {
+            text-align: center;
+            padding: 10vw 5vw;
+        }
+    }
+
+    .header {
+        &__contacts {
+            display: none !important;
+        }
+    }
+
+    .hero {
+        height: auto;
+        
+        &__caption {
+            position: static;
+            padding: 10vw 5vw;
+            @include transform(none);
+
+            .image-wrapper {
+                margin-top: 10vw;
+            }
+        }
+    }
+
+    h1 {
+        font-size: 4.5vw;
+        line-height: 5.5vw;
+    }
+
+    .menu {
+        display: none;
+
+        &-holder {
+            justify-content: flex-end;
+        }
+    }
+
+    .hamburger {
+        display: inline-block;
+    }
+
+    section {
+        &.skew {
+            transform: skewY(-5deg) translateY(-10%);
+        }
+    }
+
+}
+
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 3.5vw;
+        line-height: 4.5vw;
+    }
+}
+
+
+@media screen and (max-width: 576px) {
+
+    h1 {
+        font-size: 6.5vw;
+        line-height: 7.5vw;
+    }
+
+    .hero {
+        &__caption {
+            .button-holder {
+                margin-top: 10vw;
+            }
+        }
+    }
+}

@@ -1,0 +1,29 @@
+#AddDefaultCharset utf-8
+RewriteEngine On
+
+RewriteCond %{HTTP_HOST} ^configurator.pcmarket\.uz [NC]
+RewriteCond %{SERVER_PORT} 80
+RewriteRule ^(.*)$ https://www.configurator.pcmarket.uz/$1 [R,L]
+
+RewriteBase     /
+
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+RewriteRule ^(\w+)$ index.php?cat=$1 [L,NC]
+
+#php_value display_errors 1
+#php_value display_startup_errors 1
+#php_value error_reporting E_ALL
+
+#Session timeout
+php_value session.cookie_lifetime 86400
+php_value session.gc_maxlifetime 86400
+
+<FilesMatch "\.(html|htm|js|css)$">
+FileETag None
+<ifModule mod_headers.c>
+Header unset ETag
+Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+</ifModule>
+</FilesMatch>

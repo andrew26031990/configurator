@@ -1,0 +1,70 @@
+@mixin transition($trans) {
+    -webkit-transition: $trans;
+       -moz-transition: $trans;
+        -ms-transition: $trans;
+         -o-transition: $trans;
+            transition: $trans;
+}
+
+@mixin border-radius($radius) {
+    -webkit-border-radius: $radius !important;
+            border-radius: $radius !important;
+}
+
+@mixin box-shadow($shadow) {
+        box-shadow: $shadow;
+        -webkit-box-shadow: $shadow;
+}
+
+@mixin transform($transform) {
+    -webkit-transform: $transform;
+       -moz-transform: $transform;
+        -ms-transform: $transform;
+         -o-transform: $transform;
+            transform: $transform;
+}
+
+@mixin animation($animation-name, $animation-duration, $animation-iteration-count, $animation-timing-function) {
+    -webkit-animation-name: $animation-name;
+       -moz-animation-name: $animation-name;
+        -ms-animation-name: $animation-name;
+            animation-name: $animation-name;
+    -webkit-animation-duration: $animation-duration;
+       -moz-animation-duration: $animation-duration;
+        -ms-animation-duration: $animation-duration;
+            animation-duration: $animation-duration;
+    -webkit-animation-iteration-count: $animation-iteration-count;
+       -moz-animation-iteration-count: $animation-iteration-count;
+        -ms-animation-iteration-count: $animation-iteration-count;
+            animation-iteration-count: $animation-iteration-count;
+    -webkit-animation-timing-function: $animation-timing-function;
+       -moz-animation-timing-function: $animation-timing-function;
+        -ms-animation-timing-function: $animation-timing-function;
+            animation-timing-function: $animation-timing-function;
+}
+
+@mixin opacity($opacity) {
+      -moz-opacity: $opacity;
+      opacity: $opacity;
+}
+@mixin keyframes($name) {
+  @-webkit-keyframes #{$name} {
+    @content; 
+  }
+  @-moz-keyframes #{$name} {
+    @content;
+  }
+  @-ms-keyframes #{$name} {
+    @content;
+  }
+  @keyframes #{$name} {
+    @content;
+  } 
+}
+
+
+@mixin gradient($gradient) {
+    background: -moz-linear-gradient($gradient);
+    background: -webkit-linear-gradient($gradient);
+    background: linear-gradient($gradient);
+}

@@ -6,14 +6,14 @@ $(document).ready(function() {
             $('body .preloader2').fadeOut('slow', function () {
             });
         },10000);  */
-    
+
     $('#tree_table_filter').css('float', 'right');
-    
+
     $(".delete_relation_filter_tree").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить эту связь?");
           if (r === true) {
-            var relation_id = $(this).attr("dataId");            
+            var relation_id = $(this).attr("dataId");
             var a = $(this).closest('tr').attr('id', relation_id);
             $.ajax({
             url: "../modules/deleteRelationTreeFilter.php",
@@ -28,23 +28,23 @@ $(document).ready(function() {
                     alert(data);
                     a.css('display', 'none');
                     window.location.reload();
-                    
+
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                  });
-            
+
           }
-        
+
     }));
-    
+
     $(".delete_relation_prod_tree").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить эту связь?");
           if (r === true) {
-            var relation_id = $(this).attr("dataId");            
+            var relation_id = $(this).attr("dataId");
             var a = $(this).closest('tr').attr('id', relation_id);
             $.ajax({
             url: "../modules/deleteRelationTreeProduct.php",
@@ -59,18 +59,18 @@ $(document).ready(function() {
                     alert(data);
                     a.css('display', 'none');
                     window.location.reload();
-                    
+
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                  });
-            
+
           }
-        
+
     }));
-    
+
     $(".delete_prod").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить товар?");
@@ -89,16 +89,44 @@ $(document).ready(function() {
                     alert(data);
                     window.location.reload();
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                  });
-                 
+
           }
-        
+
     }));
-    
+
+    $(".delete_sborka").on('click',(function(e) {
+        e.preventDefault();
+        var r = confirm("Вы действительно хотите удалить сборку?");
+        if (r === true) {
+            var prod_id = $(this).attr("dataId");
+            $.ajax({
+                url: "../modules/deleteSborka.php",
+                type: "POST",
+                data:  {prod_id: prod_id},
+                beforeSend : function()
+                {
+                    //alert('beforesend')
+                },
+                success: function(data)
+                {
+                    alert(data);
+                    window.location.reload();
+                },
+                error: function(e)
+                {
+                    alert(e.toString());
+                }
+            });
+
+        }
+
+    }));
+
     $("#me").on('click', '.delete_prod',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить товар?");
@@ -116,16 +144,16 @@ $(document).ready(function() {
                 {
                     alert(data);
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                  });
-                 
+
           }
         $(this).DataTable().reload();
     }));
-    
+
     $(".delete_filter").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить фильтр?");
@@ -144,14 +172,14 @@ $(document).ready(function() {
                 alert(data);
                 window.location.reload();
             },
-           error: function(e) 
+           error: function(e)
             {
                 alert(e.toString());
-                   }          
+                   }
                  });
         }
     }));
-    
+
     /*$(".edit_prod").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить товар?");
@@ -170,16 +198,16 @@ $(document).ready(function() {
                     alert(data);
                     window.location.reload();
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                  });
-                 
+
           }
-        
+
     }));*/
-    
+
     $(".edit_filter").on('click',(function(e) {
         e.preventDefault();
         var f_name = prompt("Please enter your name", $(this).closest('tr').find("td:eq(1)").html().replace(/\s+/g,''));
@@ -199,15 +227,15 @@ $(document).ready(function() {
                     alert(data);
                     window.location.reload();
                 },
-               error: function(e) 
+               error: function(e)
                 {
                 alert(e.toString());
-                   }          
+                   }
                 });
-                 
+
           }
     }));
-    
+
     $('select').on('change',(function(e) {
         var type = $(this).attr('id');
         if(type === "sborka2"){
@@ -235,13 +263,13 @@ $(document).ready(function() {
                             $('#tip_tovara2').append(tr_str);
                         }
                    },
-                  error: function(e) 
+                  error: function(e)
                    {
                        alert(e.toString());
-                   }          
+                   }
                  });
             }
-            
+
         }else if(type === "sborka1"){
             //alert($("#sborka1").val());
             var filter_id = $("#sborka1").val();
@@ -267,17 +295,17 @@ $(document).ready(function() {
                             $('#tip_tovara1').append(tr_str);
                         }
                    },
-                  error: function(e) 
+                  error: function(e)
                    {
                        alert(e.toString());
-                   }          
+                   }
                  });
             }
-            
-        }    
+
+        }
     }));
-    
-    
+
+
     $('#enableDisableFileInput').change(function() {
         if(this.checked) {
             $(this).closest("#editProduct").find("input[type=file]").removeAttr('disabled');
@@ -285,40 +313,40 @@ $(document).ready(function() {
             $(this).closest("#editProduct").find("input[type=file]").attr('disabled', 'disabled');
         }
     });
-    
+
     $("#tip_tovara2_tovar2").on('click',(function(e) {
         e.preventDefault();
         var tree_id = $('#tip_tovara2').val();
         //var prod_id = $('#tovar2').val();
         var prod_id_input = $('#prod_id_input').val();
-        alert(prod_id_input + tree_id);
+        //alert(prod_id_input + tree_id);
         var prod_id = $('option[value="'+prod_id_input+'"]').attr('id');
-        alert(prod_id);
+        //alert(prod_id);
         $.ajax({
         url: "../modules/addRelationProductTree.php",
          type: "POST",
          data:  {tree_id: tree_id, prod_id: prod_id},
          beforeSend : function()
          {
-          alert(tree_id + " " + prod_id)
+          //alert(tree_id + " " + prod_id)
          },
          success: function(data)
             {
                 alert(data);
             },
-           error: function(e) 
+           error: function(e)
             {
                 alert(e.toString());
-                   }          
+                   }
                  });
     }));
-    
+
     $("#saveCategorySettings").on('click',(function(e) {
         //e.preventDefault();
         alert();
     }));
-    
-    $("#tip_tovara1_filter1").on('click',(function(e) { 
+
+    $("#tip_tovara1_filter1").on('click',(function(e) {
         e.preventDefault();
         var tree_id = $('#tip_tovara1').val();
         var filter_id = $('#filter1').val();
@@ -335,13 +363,13 @@ $(document).ready(function() {
             {
                 alert(data);
             },
-           error: function(e) 
+           error: function(e)
             {
                 alert(e.toString());
-                   }          
+                   }
                  });
     }));
-    
+
     $("#addProduct").on('submit',(function(e) {
         e.preventDefault();
         //alert('befin');
@@ -380,7 +408,44 @@ $(document).ready(function() {
                     }
                   });
        }));
-       
+
+    $("#addSborka").on('submit',(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: "../modules/addSborka.php",
+            type: "POST",
+            data:  new FormData(this),
+            contentType: false,
+            cache: false,
+            processData:false,
+            beforeSend : function()
+            {
+                //alert('beforesend')
+            },
+            success: function(data)
+            {
+                if(data=='Не все поля заполнены')
+                {
+                    // invalid file format.
+                    alert(data);
+                }
+                else if(data == 'Неверное расширение картинки')
+                {
+                    alert(data);
+                }else if(data == 'Сборка успешно добавлена в базу'){
+                    alert(data);
+                    window.location = '/admin.php?view=constructors';
+                }else{
+                    alert(data);
+                }
+            },
+            error: function(e)
+            {
+                alert(e.toString());
+            }
+        });
+    }));
+
        $(".edit_prod").on('click',(function(e) {
            var id = $(this).closest('tr').find("td:eq(0)").text().trim();
            var oldImg = $(this).closest('tr').find("td:eq(4)").find("img").attr('src').trim();
@@ -403,7 +468,25 @@ $(document).ready(function() {
             //$('#editProduct').find('select').find('option:contains('+filter+')').attr('selected','selected');
             //$('#editProduct select').find('option').text('nvidia').attr('selected','selected');
        }));
-       
+
+    $(".edit_sborka").on('click',(function(e) {
+        var id = $(this).closest('tr').find("td:eq(0)").text().trim();
+        var title = $(this).closest('tr').find("td:eq(1)").text().trim();
+        var link = $(this).closest('tr').find("td:eq(2)").find('a').attr('href');
+        var price = $(this).closest('tr').find("td:eq(3)").text().trim();
+        var description = $(this).closest('tr').find("td:eq(4)").text().trim();
+        var oldImg = $(this).closest('tr').find("td:eq(5)").find("img").attr('src').trim();
+
+
+        $('#editSborka').find('input[name=edit_title]').val(title);
+        $('#editSborka').find('iframe[name=edit_frame]').attr('src', link);
+        $('#editSborka').find('textarea[name=edit_description]').val(description);
+        $('#editSborka').find('input[name=edit_price]').val(price);
+        $('#editSborka').find('input[name=edit_link]').val(link);
+        $('#editSborka').find('input[name=idSborki]').val(id);
+        $('#editSborka').find('input[name=oldImg]').val(oldImg);
+    }));
+
        $("#editProduct").on('submit',(function(e) {
         e.preventDefault();
         //alert('befin');
@@ -423,29 +506,42 @@ $(document).ready(function() {
                 alert(data);
                 $("#editProduct")[0].reset();
                 window.location.reload();
-          /*if(data=='Не все поля заполнены')
-          {
-           // invalid file format.
-           alert(data);
-          }
-          else if(data == 'Неверное расширение картинки')
-          {
-            alert(data);
-          }else if(data == 'Товар успешно добавлен в базу'){
-              alert(data);
-             $("#editProduct")[0].reset();
-             window.location.reload();
-          }else{
-              alert(data);
-          }*/
             },
-           error: function(e) 
+           error: function(e)
             {
                 alert(e.toString());
-            }          
+            }
           });
        }));
-       
+
+    $("#editSborka").on('submit',(function(e) {
+        e.preventDefault();
+        alert('befin');
+        console.log(new FormData(this));
+        $.ajax({
+            url: "../modules/editSborka.php",
+            type: "POST",
+            data:  new FormData(this),
+            contentType: false,
+            cache: false,
+            processData:false,
+            beforeSend : function()
+            {
+                //alert('beforesend')
+            },
+            success: function(data)
+            {
+                alert(data);
+                $("#editSborka")[0].reset();
+                window.location.reload();
+            },
+            error: function(e)
+            {
+                alert(e.toString());
+            }
+        });
+    }));
+
        $("#addFilter").on('submit',(function(e) {
         e.preventDefault();
         //alert('befin');
@@ -467,48 +563,48 @@ $(document).ready(function() {
                     $("#addFilter")[0].reset();
                     window.location.reload();
                 }else{
-                   alert(data);  
+                   alert(data);
                 }
-                
+
             },
-           error: function(e) 
+           error: function(e)
             {
                 alert(e.toString());
-            }          
+            }
           });
        }));
-       
-       
 
-    
+
+
+
     $('#tree_table').DataTable({
         "lengthChange": true,
     });
-    
+
     $('#filter_table').DataTable({
         "lengthChange": false,
     });
-    
+
     $('#filter_tree_relation').DataTable({
         "lengthChange": false,
     });
-    
+
     $('#prod_tree_relation').DataTable({
         "lengthChange": false,
     });
-    
+
     $('#cat_prod_table').DataTable({
         "lengthChange": true,
     });
-    
+
     $('#users').DataTable({
         "lengthChange": true,
     });
-    
+
     $('#cat_filter_table').DataTable({
         "lengthChange": true,
     });
-    
+
     $('#table_id').DataTable({
         'processing': true,
         'serverSide':true,
@@ -517,7 +613,7 @@ $(document).ready(function() {
             type:'post'
         }
     });
-            
+
     $( "#leftPanel" ).click(function() {
         if($('nav.col-md-2').hasClass('remove')){
                        $('nav.col-md-2').removeClass('remove');
@@ -526,10 +622,10 @@ $(document).ready(function() {
                }
 
        });
-       
-       $('#tree').on("select_node.jstree", function (e, data) { 
-           alert("node_id: " + data.node.id); 
-              
+
+       $('#tree').on("select_node.jstree", function (e, data) {
+           //alert("node_id: " + data.node.id);
+
               $.ajax({
                 url: "/modules/admin/getFilters.php",
                  type: "POST",
@@ -552,15 +648,16 @@ $(document).ready(function() {
                             ]
                         });
                     },
-                   error: function(e) 
+                   error: function(e)
                     {
+                        alert('here');
                         alert(e.toString());
-                       }          
+                       }
                     });
                     $(".preloader").css("display", "none");
        });
-       
-       
+
+
        function customMenu(node) {
             // The default set of all items
             var items = {
@@ -582,17 +679,17 @@ $(document).ready(function() {
                                  },
                                  success: function(data)
                                     {
-                                        alert(data);
+                                        //alert(data);
                                         $('#tree').jstree(true).refresh();
                                         //notifSet ();
                                     },
-                                   error: function(e) 
+                                   error: function(e)
                                     {
                                         alert(e.toString());
-                                       }          
+                                       }
                                     });
                             }
-                        }else{ 
+                        }else{
                             alert('В этот узел нельзя ничего добавлять');
                         }
                     }
@@ -617,16 +714,16 @@ $(document).ready(function() {
                                         //alert(data);
                                         $('#tree').jstree(true).refresh();
                                     },
-                                   error: function(e) 
+                                   error: function(e)
                                     {
                                         alert(e.toString());
-                                       }          
+                                       }
                                     });
                             }
-                        }else{ 
+                        }else{
                             alert('Этот объект запрещен для редактирования');
                         }
-                          
+
                     }
                 },
                 deleteItem: { // The "delete" menu item
@@ -649,12 +746,12 @@ $(document).ready(function() {
                                     {
                                         //alert('Удаление прошло успешно');
                                         $('#tree').jstree(true).refresh();
-                                        
+
                                     },
-                                   error: function(e) 
+                                   error: function(e)
                                     {
                                         alert(e.toString());
-                                       }          
+                                       }
                                     });
                             }
                         }else{
@@ -662,7 +759,7 @@ $(document).ready(function() {
                         }
                         //console.log(inst);
                         //console.log(obj);
-                        
+
                     }
                 }
             };
@@ -674,7 +771,7 @@ $(document).ready(function() {
                             if(isAdmin){
                                 alert(node.id);
                             }
-                            
+
                             //inst.delete_node(inst.get_selected());
                         }
                         else {
@@ -685,7 +782,7 @@ $(document).ready(function() {
             return items;
         }
 
-                $('#tree').jstree({ 
+                $('#tree').jstree({
                     'core' : {
                         'check_callback': true,
                         "themes" : { "stripes" : true },
@@ -696,12 +793,12 @@ $(document).ready(function() {
                     },
                     "plugins": [ "contextmenu", "unique", "dnd"],
                     "contextmenu": {items: customMenu}
-                }).on("select_node.jstree", function (e, data) { 
-                     
+                }).on("select_node.jstree", function (e, data) {
+
                 });
                     /*.bind("move_node.jstree", function(e, data) {
                         alert(data.node.id);
-                        alert(data.parent); 
+                        alert(data.parent);
                         alert(data.old_parent);
                         alert(data.position);
                     })*/
@@ -711,10 +808,10 @@ $(document).ready(function() {
                     var data= $('#tree').jstree().get_selected(true);
                     alert(data[0].id + data.node.parents.length);
                 });*/
-                
-                
-                
-                
+
+
+
+
                 $("#addRootNode").on('click',(function(e) {
                     e.preventDefault();
                     var name = $('#level1').val();
@@ -738,17 +835,17 @@ $(document).ready(function() {
                                 $("#level1").val();
                                 $('#tree').jstree(true).refresh();
                                },
-                              error: function(e) 
+                              error: function(e)
                                {
                                    alert(e.toString());
-                               }          
+                               }
                              });
                     }
                     //alert('befin');
-                    
+
                    }));
-                   
-            
+
+
 });
 
 function number_format(number, decimals, dec_point, thousands_sep) {
@@ -843,7 +940,7 @@ function notifSet () {
 			});
 		}
             }
-            
+
             function notifyMe () {
 		var notification = new Notification ("Все еще работаешь?", {
 			tag : "ache-mail",

@@ -1,11 +1,10 @@
 <?php
-/*if($_SERVER['REMOTE_ADDR'] != '62.209.150.52'){
-    die('Na sayte vedutsya profilakticheskie raboti');
-}*/
+//ini_set('display_errors', 1); ini_set('display_startup_errors', 1); error_reporting(E_ALL);
 include 'functions.php';
 include 'modules/online.php';
 $ini = parse_ini_file('settings.ini');
 setlocale(LC_MONETARY, 'uz_UZ');
+header('Access-Control-Allow-Origin: *');
 ?>
 <!DOCTYPE html>
 <html>
@@ -23,6 +22,7 @@ setlocale(LC_MONETARY, 'uz_UZ');
     <link rel="stylesheet" href="configurator/css/magnific-popup.min.css">
     <link rel="stylesheet" href="configurator/css/owl-carousel.min.css">
     <link rel="stylesheet" href="configurator/css/style.css">
+    <link rel="stylesheet" href="configurator/css/products.min.css">
 </head>
 <body>
 <div class="preloader2" style="position: fixed; left: 0; top: 0; z-index: 999999; width: 100%; height: 100%; overflow: visible; background: #333 url('https://pcmarket.uz/wp-content/themes/pcmarket/images/spin.svg') no-repeat center center;background-size: 250px 250px;"></div>
@@ -59,7 +59,7 @@ setlocale(LC_MONETARY, 'uz_UZ');
             <nav>
                 <ul class="row align-items-center main__menu">
                     <li><a href="/">Категории</a></li>
-                    <li><?php echo "On-Line: ".on_line(); ?></li>
+                    <!--<li><?php /*echo "On-Line: ".on_line(); */?></li>-->
                 </ul>
             </nav>
         <?php } ?>
@@ -68,7 +68,11 @@ setlocale(LC_MONETARY, 'uz_UZ');
 <section class="main">
     <?php
         if(isset($_GET["cat"])){ $cat = $_GET["cat"];
-            include($_SERVER['DOCUMENT_ROOT'].'/configurator/configuration.php');
+            if ($_GET["cat"] == 'kompyutery'){
+                include($_SERVER['DOCUMENT_ROOT'].'/configurator/ready_configuration.php');
+            }else{
+                include($_SERVER['DOCUMENT_ROOT'].'/configurator/configuration.php');
+            }
         }else {
             include($_SERVER['DOCUMENT_ROOT'].'/configurator/categories.php');
         }
@@ -91,6 +95,12 @@ setlocale(LC_MONETARY, 'uz_UZ');
 <noscript><div><img src="https://mc.yandex.ru/watch/65798533" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 
+
+<script>
+window.replainSettings = { id: '7758154e-b1a5-445c-8f75-03108bae5c9f' };
+(function(u){var s=document.createElement('script');s.async=true;s.src=u;
+var x=document.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);
+})('https://widget.replain.cc/dist/client.js');
 </script>
 </body>
 </html>

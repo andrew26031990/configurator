@@ -1,6 +1,6 @@
 <?php
 include '../functions.php';
-require '../mail/PHPMailerAutoload.php';
+//require '../mail/PHPMailerAutoload.php';
 setlocale(LC_MONETARY, 'uz_UZ');// money_format('%i ', $_POST['amount']);
 header('Content-Type: text/html; charset=utf-8');
 
@@ -16,8 +16,8 @@ $email = $_POST['email'];
 if(isset($_POST['name']) && isset($_POST['phone']) && isset($_POST['config']) && isset($_POST['amount'])){
     $name = $_POST['name'];
     $phone = $_POST['phone'];
-    $config = $_POST['config'];
-    $sborka = $_POST['sborka'];
+    $config = strip_tags($_POST['config']);
+    $sborka = strip_tags($_POST['sborka']);
     $amount = $_POST['amount'];// money_format('%i ', $_POST['amount']);
 }else{
     $name = 'no_name';
@@ -28,23 +28,25 @@ $config = str_replace('p', 'dt', $config);
 $config = str_replace('li', 'dd', $config);
 $amount = substr($amount,0,3).''.substr($amount,3,strlen($amount));
 
-$mail = new PHPMailer;
+include_once 'messages_to_telegram.php';
+SendMailToBot('Имя клиента: '.$name.PHP_EOL.'Телефон клиента: '.$phone.PHP_EOL.'Email клиента : '.$email.PHP_EOL.'Сборка: '.$sborkaLink.PHP_EOL.'Цена: '.$amount.PHP_EOL.'Сборка: '.$sborka.PHP_EOL.$config.PHP_EOL);
+
+echo 'Ваша заявка принята. В ближайшее время с вами свяжутся сотрудники компании PCMARKET';
+/*$mail = new PHPMailer;
 
 //$mail->SMTPDebug = 3;                               // Включить подробный вывод отладки
 
 $mail->isSMTP();                                       // Указываем что используем SMTP
-$mail->Host = 'smtp.yandex.ru';               //  Адрес вашего SMTP Сервера был отправлен вместе с доступами к cPanel
+$mail->Host = 'smtp.beget.com';               //  Адрес вашего SMTP Сервера был отправлен вместе с доступами к cPanel
 $mail->SMTPAuth = true;                          // Включение проверки подлинности SMTP
-$mail->Username = 'rabatavictor@yandex.ru';                 // Логин почтового ящика
-$mail->Password = '5850058R';                           // Пароль 
+$mail->Username = 'sale@pcmarket.uz';                 // Логин почтового ящика
+$mail->Password = '7UR%QHGy';                           // Пароль
 $mail->SMTPSecure = 'ssl';                            // Указываем какое подключение используем TLS или SSL в нашем случае SSL
 $mail->Port = 465;                                    // Порт для SSL - 465, TLS 587.
 
-$mail->setFrom('rabatavictor@yandex.ru', 'Конфигуратор pcmarket.uz');
+$mail->setFrom('sale@pcmarket.uz', 'Конфигуратор pcmarket.uz');
 $mail->addAddress('sale@pcmarket.uz');
-//$mail->addAddress('mandrew3601@gmail.com'); 
-//$mail->addAddress('viktor.batsatsenko@yandex.ru'); // Добавить получателяviktor.batsatsenko@yandex.ru
-$mail->addAddress($email); 
+$mail->addAddress($email);
 
               // Дальше все понятно.
 //$mail->addReplyTo('pcmarket@pcmarket.uz', 'Information');
@@ -221,13 +223,13 @@ dd{
 <![endif]-->
     </body>
 </html>';  //'Имя заказчика: '.$name.'.<br>Телефон заказчика: '.$phone.'.<br>Запрашиваемая конфигурация:<br>'.$config.'.<br>Общая сумма:<br>'.$amount;
-$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';*/
 
-if(!$mail->send()) {
+/*if(!$mail->send()) {
     echo 'Message could not be sent.';
     echo 'Mailer Error: ' . $mail->ErrorInfo;
 } else {
     echo 'Ваша заявка принята. В ближайшее время с вами свяжутся сотрудники компании PCMARKET';
     include_once 'messages_to_telegram.php';
-    SendMailToBot('Имя клиента: '.$name.'; '.'Email клиента : '.$email.'; '.'Цена: '.$amount.'; '.'Сборка: '.$sborka.$config.'; ');
-}
+    SendMailToBot('Имя клиента: '.$name.PHP_EOL.'Email клиента : '.$email.PHP_EOL.'Цена: '.$amount.PHP_EOL.'Сборка: '.$sborka.PHP_EOL.$config.PHP_EOL);
+}*/

@@ -514,20 +514,19 @@ h2:after { content: ''; background: #27262C; width: -webkit-calc(100% - 20px); w
 
 .list { display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex; padding-bottom: 30px !important; }
 
-.list li a { display: block; }
+.list li a { display: block; transition: .3s }
 
-.list li.active a:after { content: ''; width: 100%; height: 2px; background: #D21E24; display: block; }
+
 
 .scroll-content { overflow: auto; }
 
 .product-table tbody { display: block; }
 
-.center-block .product-table ul.list li { display: inline-block; margin-bottom: 0; }
+.center-block .product-table ul.list li { display: inline-block; margin-bottom: 0; margin-right: 10px}
 
-.center-block .product-table ul.list li a { color: #fff; font-size: 16px; padding: 10px 30px; }
+.center-block .product-table ul.list li a { color: #fff; font-size: 16px; padding: 15px;    background: #1A191F; }
 
-.center-block .product-table ul.list li a:first-child { padding-left: 0; }
-
+.list li.active a, .list li:hover a  {  background: #D21E24 !important; }
 .mb-track-x .mb-bar, .mb-track-y .mb-bar { background: #D21E24; cursor: pointer; }
 
 .mb-track-x { opacity: 1 !important; }
@@ -1050,7 +1049,7 @@ img.mfp-img { -webkit-box-sizing: border-box; box-sizing: border-box; padding: 4
   .main-list li { padding: 5px 0; }
   .right-td img { max-width: 45%; }
   .img-holder { margin-top: 10px; }
-  .button { margin-top: 15px; }
+  .button { margin-top: 15px; position: relative; z-index: 999; }
   .left-td { margin-top: 15px; }
   .left-td-inner { padding-left: 5px; }
   h2 { font-size: 5vw; margin-bottom: 25px; }
@@ -1059,7 +1058,12 @@ img.mfp-img { -webkit-box-sizing: border-box; box-sizing: border-box; padding: 4
   .list { padding-bottom: 0 !important; }
   .center-block .product-table ul.list li a { font-size: 14px; }
   .inner_2 { margin-top: 5px; }
-  .product-block select + a { width: 15px !important; } }
+  .product-block select + a { width: 15px !important; } 
+ body {
+     background-size: cover !important;
+     background-attachment: scroll;
+ }
+}
 
 .carousel--first { background: #f54337; -webkit-transition: all ease-in-out .5s; -o-transition: all ease-in-out .5s; transition: all ease-in-out .5s; }
 

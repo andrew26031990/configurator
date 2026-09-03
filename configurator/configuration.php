@@ -58,7 +58,7 @@
                         ?>
                         <li>
                             <a class="toggle" href="javascript:void(0);">
-                                <img src="configurator/images/<?php echo $item['image']; ?>" />
+                                <img src="configurator/images/soft1.png<?php echo $item['image']; ?>" />
                                 <?php $rootNodeFirst = $item['id'];
                                 echo $item['name']; ?>
                             </a>
@@ -127,7 +127,7 @@
                                             ?>
                                             <li class="all asus">
                                                 <div class="product-block">
-                                                    <input type="radio" data="<?= $item['image']; ?>"
+                                                    <input type="checkbox" data="<?= $item['image']; ?>"
                                                            id="<?= $item['id']; ?>" name="<?= $translit; ?>"
                                                            value="<?php echo $item['price']; ?>"/>
                                                     <label for="<?= $item['id']; ?>"
@@ -159,9 +159,6 @@
                                 </div>
                             </td>
                             <td class="right-td <?= $translit; ?>">
-                                <?php if ($uncheck_btn == 1) { ?>
-                                    <a href="#" class="button float-right refresh">Удалить элемент</a>
-                                <?php } ?>
                                 <div class="clearfix"></div>
                                 <div class="img-holder">
                                     <img src="" alt="" class="zoom" data-magnify-src="configurator/images/products/<?= $item['image']; ?>"/>
@@ -212,7 +209,12 @@
                             Скопировать ссылку на конфигурацию
                         </a>
                     </div>
-                    
+
+                    <div class="buttons-holder">
+                        <a href="javascript:void(0);" style="width: 100%;color: black" class="button button--violet-light" onclick="generateConfigToPDF()">
+                            Сохранить в PDF
+                        </a>
+                    </div>
                     </div>
 
                 </div>
@@ -228,7 +230,7 @@
     </div>
 
     <div class="bottom-section__right">
-        <a href="#modal" class="button popup">Купить</a>
+        <a href="#modal" class="button popup">Cборка</a>
 
         <a href="#" class="bottom-section__button">
             <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" data-svg="more">
@@ -255,6 +257,11 @@
                 <a href="#" class="androidShareBtn">
                     <svg width="20" height="20" viewBox="0 0 28 26" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M16.272 5.451c-.176-.45-.272-.939-.272-1.451 0-2.208 1.792-4 4-4s4 1.792 4 4-1.792 4-4 4c-1.339 0-2.525-.659-3.251-1.67l-7.131 3.751c.246.591.382 1.239.382 1.919 0 .681-.136 1.33-.384 1.922l7.131 3.751c.726-1.013 1.913-1.673 3.253-1.673 2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4c0-.51.096-.999.27-1.447l-7.129-3.751c-.9 1.326-2.419 2.198-4.141 2.198-2.76 0-5-2.24-5-5s2.24-5 5-5c1.723 0 3.243.873 4.143 2.201l7.129-3.75zm3.728 11.549c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3zm-15-9c2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4 1.792-4 4-4zm15-7c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3z"/></svg>
                     Поделиться сборкой</a>
+            </li>
+            <li>
+                <a href="javascript:void(0);" onclick="generateConfigToPDF()">
+                    <svg width="20" height="20" viewBox="0 0 28 26" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M16.272 5.451c-.176-.45-.272-.939-.272-1.451 0-2.208 1.792-4 4-4s4 1.792 4 4-1.792 4-4 4c-1.339 0-2.525-.659-3.251-1.67l-7.131 3.751c.246.591.382 1.239.382 1.919 0 .681-.136 1.33-.384 1.922l7.131 3.751c.726-1.013 1.913-1.673 3.253-1.673 2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4c0-.51.096-.999.27-1.447l-7.129-3.751c-.9 1.326-2.419 2.198-4.141 2.198-2.76 0-5-2.24-5-5s2.24-5 5-5c1.723 0 3.243.873 4.143 2.201l7.129-3.75zm3.728 11.549c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3zm-15-9c2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4 1.792-4 4-4zm15-7c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3z"/></svg>
+                    Сохранить в PDF</a>
             </li>
             <!--<li>
                 <a href="javascript:void(0);" class="helpBtnClick">

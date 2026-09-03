@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 
 //Объектно-ориентированный стиль
 //$mysqli = new mysqli('localhost', 'victors90_config', '1Z*vIdRE', 'victors90_config');
-$mysqli = new mysqli('localhost', 'victors90_confi2', '8h%MAdRC', 'victors90_confi2'); //real config
+$mysqli = new mysqli('localhost', 'wp_user', 'uK2wi9eiEeghili9', 'configurator'); //real config
 
 //Устанавливаем кодировку utf8
 $mysqli->query("SET NAMES 'utf8'");
@@ -150,8 +150,30 @@ function getAllProducts($mysqli){
     return $cat;
 }
 
+function getAllConstructors($mysqli){
+    $sql = "select sborka.id, sborka.title, sborka.link, sborka.image, sborka.price, sborka.description from `sborki` as sborka";
+    $res = $mysqli->query($sql);
+    //Создаем масив где ключ массива является ID меню
+    $cat = array();
+    while($row = $res->fetch_assoc()){
+        $cat[$row['id']] = $row;
+    }
+    return $cat;
+}
+
 function getAllFilters($mysqli){
     $sql = "select * from filters";
+    $res = $mysqli->query($sql);
+    //Создаем масив где ключ массива является ID меню
+    $cat = array();
+    while($row = $res->fetch_assoc()){
+        $cat[$row['id']] = $row;
+    }
+    return $cat;
+}
+
+function getAllFiltersByType($mysqli, $type){
+    $sql = "select filters.id as f_id, filters.f_name from tree_filter join filters on tree_filter.filter_id = filters.id where tree_filter.tree_id = $type";
     $res = $mysqli->query($sql);
     //Создаем масив где ключ массива является ID меню
     $cat = array();
@@ -219,7 +241,7 @@ function CountFilters($mysqli)
 function CountSborka($mysqli)
 {
   $row = 0;
-  $res = $mysqli->query("select * from tree where level = '1'");  
+  $res = $mysqli->query("select * from tree where level = '0'");  
   if ($res) 
     { 
         $row = mysqli_num_rows($res); 

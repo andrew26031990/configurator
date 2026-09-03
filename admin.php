@@ -1,5 +1,5 @@
 <?php
-
+//die('Админка на техническом обслуживании');
 include 'functions.php';
 //include 'modules/backup.php';
 session_start();

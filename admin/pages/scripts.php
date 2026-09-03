@@ -1,6 +1,7 @@
 <!-- Bootstrap core JavaScript-->
 <script src="admin/js/admin.js"></script>
 <script src="admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/33.0.0/classic/ckeditor.js"></script>
 <script>
     // Replace the <textarea id="editor1"> with a CKEditor
     // instance, using default configuration.

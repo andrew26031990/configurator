@@ -18,18 +18,7 @@
                 <label for="picture">Картинка товара</label>
                 <input type="file" class="form-control-file" accept="image/*" name="picture">
             </div>
-            <div class="form-group">
-                <div class="row-fluid">
-                    <label for="filter">Добавить фильтр</label>
-                    <select class="form-control" name="filter">
-                        <?php $filters = getAllFilters($mysqli);
-                        foreach ($filters as $item){
-                            ?>
-                            <option value="<?php echo $item['id']; ?>"><?php echo $item['f_name']; ?></option>
-                        <?php } ?>
-                    </select>
-                </div>
-            </div>
+
             <div class="form-group">
                 <label for="description">Описание товара</label>
                 <textarea class="form-control" name="description" rows="5" placeholder="Описание товара"></textarea>
@@ -52,6 +41,36 @@
                     <option value="0">Выберите тип товара</option>
                 </select>
             </div>-->
+            <div class="form-group">
+                <label for="levels2">Выберите сборку</label>
+                <select class="form-control" name="sborka_tov" id="sborka2">
+                    <option value="0">Выберите сборку</option>
+                    <?php $node = getNodes($mysqli, 1);
+                    foreach ($node as $item){
+                        ?>
+                        <option value="<?php echo $item['id']; ?>"><?php echo $item['name']; ?></option>
+                    <?php } ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="levels2">Выберите тип товара</label>
+                <select class="form-control" name="tip_tovar_tov" id="tip_tovara2">
+                    <option value="0">Выберите тип товара</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="row-fluid">
+                    <label for="filter">Добавить фильтр</label>
+                    <select class="form-control" name="filter" id="filters_tov">
+                        <option value="0">Выберите фильтр</option>
+                        <?php $filters = getAllFilters($mysqli);
+                        foreach ($filters as $item){
+                            ?>
+                            <option value="<?php echo $item['id']; ?>"><?php echo $item['f_name']; ?></option>
+                        <?php } ?>
+                    </select>
+                </div>
+            </div>
             <button class="btn btn-secondary">Редактировать</button>
             <button class="btn btn-primary submitBtn">Сохранить</button>
         </form>

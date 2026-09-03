@@ -1,5 +1,6 @@
 #AddDefaultCharset utf-8
 RewriteEngine On
+RewriteRule ^cat/kompyutery$ index.php?cat=kompyutery [L,NC]
 
 RewriteCond %{HTTP_HOST} ^configurator.pcmarket\.uz [NC]
 RewriteCond %{SERVER_PORT} 80
@@ -9,6 +10,9 @@ RewriteBase     /
 
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 RewriteRule ^(\w+)$ index.php?cat=$1 [L,NC]
+#RewriteRule ^cat/(\w+)$ index.php?cat=$1 [L,NC]
+
+
 
 #php_value display_errors 1
 #php_value display_startup_errors 1

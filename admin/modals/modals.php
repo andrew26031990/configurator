@@ -13,3 +13,6 @@
 <!-- Modal Filter-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalFilter.php'); ?>
 <!--End Modal Filter-->
+<!-- Modal Filter-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalEditSborka.php'); ?>
+<!--End Modal Filter-->

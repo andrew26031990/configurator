@@ -31,11 +31,11 @@ $(".refresh").on("click", function (e) {
   e.preventDefault();
   var id = $(this).closest("table").attr("id");
   if (id === "korpus_dlya_pk") {
-    $("#" + id + ' input[type="radio"]').prop("checked", !1);
+    $("#" + id + ' input[type="checkbox"]').prop("checked", !1);
     $(".config-img-outer img").attr("src", "images/config.png");
     $(".korpus_dlya_pk .img-holder > img").attr("src", "images/product.png");
   } else {
-    $("#" + id + ' input[type="radio"]').prop("checked", !1);
+    $("#" + id + ' input[type="checkbox"]').prop("checked", !1);
   }
   resetCustomBlock(id);
   sel_bd_id.delete(id);
@@ -51,10 +51,11 @@ $("html select").on("change", function (e) {
   var id = $(this).closest("table").attr("id");
   var bd_id = $(this).closest("input").attr("id");
   var quantity = $(this).children("option:selected").val();
-  collectQuantityFromEachSelectedInput();  
+  collectQuantityFromEachSelectedInput();
 });
 
-$(document).on("change", "input[type=radio]", function () {
+$(document).on("change", "input[type=checkbox]", function () {
+  $("input[type=checkbox][name=" + this.name + "]").not(this).prop('checked', false);
   var id = $(this).closest("table").attr("id");
   var bd_id = $(this).attr("id");
   var quantity = $(this).parent('div').find('select option:selected').text();
@@ -95,7 +96,7 @@ $(".list a").click(function () {
       $("#" + component + " .inner_2 .main-list").remove();
       $("#" + component + " .inner_2").append('<ul class="main-list"></ul>');
       if (sel_price.has(component)) {
-        if(component !== 'operativnaya_pamyatj' && component !== 'ozu' && component !== 'monitor' && component !== 'operativnaya_pamyatj' && component !== 'jestkie_diski_HDD' && component !== 'jestkiy_disk'){
+        if(component !== 'video_karti' && component !== 'operativnaya_pamyatj' && component !== 'ozu' && component !== 'monitor' && component !== 'operativnaya_pamyatj' && component !== 'jestkie_diski_HDD' && component !== 'jestkiy_disk'){
           selected = "disabled";
         }
         for (var i = 0; i < myObj.length; i++) {
@@ -116,7 +117,7 @@ $(".list a").click(function () {
           var tr_str =
               `<li class="all asus">
                                 <div class="product-block">
-                                    <input type="radio" data="` +
+                                    <input type="checkbox" data="` +
               myObj[i].image +
               `" id="` +
               myObj[i].id +
@@ -133,10 +134,10 @@ $(".list a").click(function () {
               myObj[i].name +
               `">
                                         <span></span><select title="Выберите количество" class="select quantity" method="post" name="`+component+`" `+ selected +` >`+ opt +`
-                                                        
+
                                                     </select>
                                         ` +
-              myObj[i].name + 
+              myObj[i].name +
               `<a href="`+myObj[i].description+`" style="z-index: 99999;width: 20px;margin-left:5px;" target="_BLANK"><img src="configurator/images/info.svg" /></a>
                                     </label>
                                 </div>
@@ -145,8 +146,8 @@ $(".list a").click(function () {
               format2(raznica, "UZS") +
               `</div>
                             </li>`;
-                            
-                            
+
+
           $("#" + component + " .inner_2 > ul.main-list").append(tr_str);
           calculatePlusMinusFromChecked();
           $("body .preloader2").css("display", "none");
@@ -165,7 +166,7 @@ $(".list a").click(function () {
           var tr_str =
               `<li class="all asus">
                                 <div class="product-block">
-                                    <input type="radio" data="` +
+                                    <input type="checkbox" data="` +
               myObj[i].image +
               `" id="` +
               myObj[i].id +
@@ -224,7 +225,7 @@ function genereteSel(idOfSel){
     return opt;
 }
 
-$(document).on("click", "input[type=radio]", function () {
+$(document).on("click", "input[type=checkbox]", function () {
   var image = $(this).attr("data");
   var type = $(this).attr("name");
   var location = window.location.origin;
@@ -254,10 +255,17 @@ $("#modal_2 button[type=submit]").click(function (e) {
   var phone = $("#modal_2 #phone").val();
   var email = $("#modal_2 #email").val();
   var sborka = $("#modal_2 #sborka").val();
-  var config = $(".result").html();
+  var config = '';
+  $.each($("input[type=checkbox]:checked"), function() {
+    var idVal = $(this).attr("id");
+    var name = $(this).attr("name");
+    var type = $("#" + name + " h2").text();
+    quantity = $(this).parent('div').find('select option:selected').text();
+    config += type + ': ' + quantity + ' x ' + $("label[for='" + idVal + "']").attr("data-name") + '\n';
+  });
   var amount = $(".configuration .total-title").html();
   var sborkaLink = generateConfigToShare();
-  var countRadiosChecked = $(":radio:checked").length;
+  var countRadiosChecked = $(":checkbox:checked").length;
   var countRadiosUnchecked = $('.scrollbar-inner').length;
   if (name === "" || phone === "" || email === "") {
     alert("Не все поля заполнены");
@@ -268,7 +276,7 @@ $("#modal_2 button[type=submit]").click(function (e) {
         type: "POST",
         data: { name: name, phone: phone, config: config, amount: amount, email: email, sborka: sborka, sborkaLink: sborkaLink },
         beforeSend: function() {
-            
+
         },
         success: function (response) {
           alert(response);
@@ -300,10 +308,12 @@ function recordOrderToDB(name, email, phone, sborka, amount){
 
 
 $(document).ready(function ($) {
-    
-    $('.mobile-only').css('z-index', 999);
- 
 
+    $('.mobile-only').css('z-index', 999);
+
+  $('select[name="video_karti"]').each(function() {
+    $(this).removeAttr("disabled");
+  });
   $('#phone').inputmask("+(999) 99 999-99-99");
   $('#email').inputmask("email");
   /*Andrew script*/
@@ -317,7 +327,7 @@ $(document).ready(function ($) {
 
   $("body #hellopreloader").fadeOut("slow", function () {});
 
-  $("input[type=radio]").removeAttr("checked");
+  $("input[type=checkbox]").removeAttr("checked");
 
   collectQuantityFromEachSelectedInput();
 
@@ -450,7 +460,7 @@ $(document).ready(function ($) {
 
 window.addEventListener( 'load', function( event ) {
   $("body .preloader2").css("display", "none");
-  setTimeout(function(){ 
+  setTimeout(function(){
       $('#__replain_widget').css('right', '60px');
   $('#__replain_widget').css('bottom', '0px');
   }, 3000);
@@ -568,7 +578,7 @@ $('.popup').magnificPopup({
 
 function collectQuantityFromEachSelectedInput(){
     sel_quantity.clear();
-    $.each($("input[type=radio]:checked"), function () {
+    $.each($("input[type=checkbox]:checked"), function () {
         var bd_id = $(this).attr('id');
         var id = $(this).closest("table").attr("id");
         var quantity = $(this).parent('div').find('select option:selected').text();
@@ -578,7 +588,7 @@ function collectQuantityFromEachSelectedInput(){
 }
 
 function calculatePlusMinusFromChecked() {
-  $.each($("input[type=radio]:checked"), function () {
+  $.each($("input[type=checkbox]:checked"), function () {
     var id = $(this).closest("table").attr("id");
     var bd_id = $(this).attr("id");
     selected_price = $(this).val();
@@ -620,9 +630,9 @@ function printDiv() {
 }
 
 function setQuantities() {
-    
-  $.each($("input[type=radio]:checked"), function () {
-      
+
+  $.each($("input[type=checkbox]:checked"), function () {
+
     var id = $(this).closest("table").attr("id");
     var bd_id = $(this).attr("id");
     //alert(bd_id + ' ' + id);
@@ -713,13 +723,13 @@ function generateConfiguration(){
   var numBlocks = $('.scrollbar-inner').length;
   var Blocks = $('.scrollbar-inner');
   for(var i=0;i<2;i++){ //numBlocks
-    var radioItemsEachBlockLength = $('.scrollbar-inner table:eq(' + i + ') input:radio').length;
+    var radioItemsEachBlockLength = $('.scrollbar-inner table:eq(' + i + ') input:checkbox').length;
     //randNum = Math.floor(Math.random() * radioItemsEachBlockLength);
 
     //alert(randNum);
 
     if($('.scrollbar-inner table:eq(' + i + ')').hasClass('countable')){
-      $('.scrollbar-inner table:eq(' + i + ') input:radio:eq(0)').prop('checked', true);
+      $('.scrollbar-inner table:eq(' + i + ') input:checkbox:eq(0)').prop('checked', true);
     }
   }
   setImageOnLoad();
@@ -752,7 +762,7 @@ function generateConfigForMultipleBlocksOnLoad() {
   var b = [];
   var sum = 0;
   var str = "";
-  $.each($(".countable input[type=radio]:checked"), function () {
+  $.each($(".countable input[type=checkbox]:checked"), function () {
     a.push($(this).val());
   });
 
@@ -762,7 +772,7 @@ function generateConfigForMultipleBlocksOnLoad() {
   }
   $(".configuration-inner .total-title").html(format(sum, "UZS"));
   $(".bottom-section__left").html(format(sum, "UZS"));
-  
+
   $.each($(".countable input:checked"), function () {
     var idVal = $(this).attr("id");
     var name = $(this).attr("name");
@@ -777,7 +787,7 @@ function generateConfigForMultipleBlocksOnLoad() {
 
 
 function calculatePlusMinusFromCheckedForultipleBlocksOnLoad() {
-  $.each($(".countable input[type=radio]:checked"), function () {
+  $.each($(".countable input[type=checkbox]:checked"), function () {
     var id = $(this).closest("table").attr("id");
     var bd_id = $(this).attr("id");
     selected_price = $(this).val();
@@ -818,7 +828,7 @@ function generateConfig() {
   var str = "";
   var kolichestvo = [];
   var quantity = 0;
-  $.each($("input[type=radio]:checked"), function () {
+  $.each($("input[type=checkbox]:checked"), function () {
     quantity = $(this).parent('div').find('select option:selected').text();
     a.push($(this).val() * quantity);
     //console.log(a);
@@ -830,7 +840,7 @@ function generateConfig() {
   $(".configuration-inner .total-title").html(format(sum, "UZS"));
   $(".bottom-section__left").html(format(sum, "UZS"));
 
-  $.each($("input[type=radio]:checked"), function () {
+  $.each($("input[type=checkbox]:checked"), function () {
     var idVal = $(this).attr("id");
     var name = $(this).attr("name");
     var type = $("#" + name + " h2").text();
@@ -857,7 +867,7 @@ $('.androidShareBtn').click(function(e) {
 function generateConfigToShare(){
   var generatedLink = "";
   var link = window.location.href;
-  $.each($("input[type=radio]:checked"), function () {
+  $.each($("input[type=checkbox]:checked"), function () {
     //alert($(this).closest('select').find(':selected').val());
     generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
   });
@@ -869,7 +879,7 @@ function generateConfigToShare(){
 function generateConfigToYaShare(){
   var generatedLink = "";
   var link = window.location.href;
-  $.each($("input[type=radio]:checked"), function () {
+  $.each($("input[type=checkbox]:checked"), function () {
     //alert($(this).closest().find('select').filter(':selected').val());
     generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
   });

@@ -50,7 +50,7 @@
         <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Связи:</h6>
-                <a class="collapse-item" href="admin.php?view=addProdToCat">Добавление товара в категории</a>
+<!--                <a class="collapse-item" href="admin.php?view=addProdToCat">Добавление товара в категории</a>-->
                 <a class="collapse-item" href="admin.php?view=addFilterToCat">Добавление фильтра в категории</a>
                 <hr>
                 <a class="collapse-item" href="admin.php?view=deleteProdFromCat">Удаление товара из категории</a>
@@ -85,6 +85,19 @@
         <a class="nav-link" href="admin.php?view=categories">
             <i class="fas fa-fw fa-chart-area"></i>
             <span>Категории</span></a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePagesSborki" aria-expanded="true" aria-controls="collapsePagesSborki">
+            <i class="fas fa-fw fa-folder"></i>
+            <span>Сборки</span>
+        </a>
+        <div id="collapsePagesSborki" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="admin.php?view=add_constructor">Добавить сборку</a>
+                <a class="collapse-item" href="admin.php?view=constructors">Все сборки</a>
+            </div>
+        </div>
     </li>
 
     <!-- Divider -->

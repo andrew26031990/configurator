@@ -1,9 +1,10 @@
 <?php
 function SendMessageToBot($whatToSend, $image){
-    $botApiToken = '1035569119:AAEBhERfV2__2Lr8gfWM3PA1n5GaUm0hJt4'; // токен бота
-    
+    //$botApiToken = '1675277208:AAHjq6IDErlrINsBh0VvHS_o6qCI974ytFg'; // токен бота
+    $botApiToken = '6232662696:AAFz93P-ZB6d1C1XxmvAwd8Am2XISR4eQfo'; // токен бота
+
     $data = [
-        'chat_id' => '@myChanel2603', // название канала
+        'chat_id' => '-1001385649462', // название канала
         'photo' => $image,
         'parse_mode' => 'HTML',
         'caption' => $whatToSend
@@ -16,11 +17,13 @@ function SendMessageToBot($whatToSend, $image){
 }
 
 function SendMailToBot($whatToSend){
-    $botApiToken = '1447571605:AAHt8PQrsfhmph8zyZ1yIKj6JvZepwWsxYY'; // токен бота
-    
+    //$botApiToken = '1675277208:AAHjq6IDErlrINsBh0VvHS_o6qCI974ytFg'; // токен бота
+    $botApiToken = '1675277208:AAHjq6IDErlrINsBh0VvHS_o6qCI974ytFg'; // токен бота
+
     $data = [
-        'chat_id' => '@chanelConfigSborkiMeVitya', // название канала
-        'text' => $whatToSend
+        'chat_id' => '-1001385649462', // название канала
+        'text' => $whatToSend,
+        'parse_mode' => 'HTML'
     ];
     
     

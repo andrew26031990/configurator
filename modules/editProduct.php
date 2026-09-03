@@ -1,22 +1,37 @@
 <?php
 
 $valid_extensions = array('jpeg', 'jpg', 'png', 'gif', 'bmp'); // valid extensions
-$path = '../images/products/'; // upload directory
+$path = '../configurator/images/products/'; // upload directory
+
+/**
+ * Перезаписывает связи товара со сборками/типами (tree_prod) по выбору из мультиселекта.
+ */
+function syncProductTrees($mysqli, $prod_id, $postTrees){
+    $prod_id = (int)$prod_id;
+    if($prod_id <= 0) return;
+    $trees = is_array($postTrees) ? $postTrees : array();
+    $trees = array_values(array_unique(array_filter(array_map('intval', $trees), function($v){ return $v > 0; })));
+    $mysqli->query("DELETE FROM `tree_prod` WHERE prod_id = $prod_id");
+    foreach($trees as $tid){
+        $mysqli->query("INSERT INTO `tree_prod` (`tree_id`, `prod_id`) VALUES ($tid, $prod_id)");
+    }
+}
 
 if (!file_exists($_FILES['picture']['tmp_name']) || !is_uploaded_file($_FILES['picture']['tmp_name'])) 
 {
     if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['filter'] != ''){
         include_once '../functions.php';
         try{
-            $id = $_POST['idTovara'];
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $description = $_POST['description'];
-            $filter = $_POST['filter'];
+            $id = mysqli_real_escape_string($mysqli, $_POST['idTovara']);
+            $name = mysqli_real_escape_string($mysqli, $_POST['name']);
+            $price = mysqli_real_escape_string($mysqli, $_POST['price']);
+            $description = mysqli_real_escape_string($mysqli, $_POST['description']);
+            $filter = mysqli_real_escape_string($mysqli, $_POST['filter']);
             $insert = $mysqli->query("UPDATE products SET name = '$name', description = '$description', price = '$price', f_id = '$filter' WHERE id = '$id'");
+            syncProductTrees($mysqli, $_POST['idTovara'], isset($_POST['tip_tovar_tov']) ? $_POST['tip_tovar_tov'] : array());
             echo 'Данные товара были успешно изменены';
         }catch(Exception $ex){
-            echo $e->getMessage();
+            echo $ex->getMessage();
         }
     }else{
         echo 'Не все поля заполнены';
@@ -37,24 +52,25 @@ if (!file_exists($_FILES['picture']['tmp_name']) || !is_uploaded_file($_FILES['p
             if(move_uploaded_file($tmp,$path)) 
             {
                 //echo "<img src='$path' />";
-                $id = $_POST['idTovara'];
                 $oldImg = $_POST['oldImg'];
-                $name = $_POST['name'];
-                $price = $_POST['price'];
-                $description = $_POST['description'];
-                $filter = $_POST['filter'];
-                $final_image = strtolower($final_image);
                 //include database configuration file
                 include_once '../functions.php';
+                $id = mysqli_real_escape_string($mysqli, $_POST['idTovara']);
+                $name = mysqli_real_escape_string($mysqli, $_POST['name']);
+                $price = mysqli_real_escape_string($mysqli, $_POST['price']);
+                $description = mysqli_real_escape_string($mysqli, $_POST['description']);
+                $filter = mysqli_real_escape_string($mysqli, $_POST['filter']);
+                $final_image = mysqli_real_escape_string($mysqli, strtolower($final_image));
                 //insert form data in the database
                 try{
                     $insert = $mysqli->query("UPDATE products SET name = '$name', description = '$description', price = '$price', image = '$final_image', f_id = '$filter' WHERE id = '$id'");
+                    syncProductTrees($mysqli, $_POST['idTovara'], isset($_POST['tip_tovar_tov']) ? $_POST['tip_tovar_tov'] : array());
                     $mask = "../".$oldImg;
                     if (file_exists($mask)) {unlink($mask);}
                     //$insert = $mysqli->query("INSERT INTO products (name, description, price, image, f_id) VALUES ('".$name."','".$description."','".$price."','".$final_image."','".$filter."')");
                     echo 'Товар был успешно отредактирован';
                 }catch(Exception $ex){
-                    echo $e->getMessage();
+                    echo $ex->getMessage();
                 }
 
                 //echo $insert?'ok':'err';

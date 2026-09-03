@@ -3,7 +3,7 @@
 $valid_extensions = array('jpeg', 'jpg', 'png', 'gif', 'bmp'); // valid extensions
 $path = '../configurator/images/products/'; // upload directory
 
-if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['filter'] != '' && $_POST['tip_tovar_tov'] != '')
+if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['filter'] != '')
 {
     $img = $_FILES['picture']['name'];
     $tmp = $_FILES['picture']['tmp_name'];
@@ -18,33 +18,38 @@ if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' &
         if(move_uploaded_file($tmp,$path)) 
         {
             //echo "<img src='$path' />";
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $description = $_POST['description'];
-            $filter = $_POST['filter'];
             //include database configuration file
             include_once '../functions.php';
             include_once 'messages_to_telegram.php';
+            $name = mysqli_real_escape_string($mysqli, $_POST['name']);
+            $price = mysqli_real_escape_string($mysqli, $_POST['price']);
+            $description = mysqli_real_escape_string($mysqli, $_POST['description']);
+            $filter = mysqli_real_escape_string($mysqli, $_POST['filter']);
+            $final_image_db = mysqli_real_escape_string($mysqli, strtolower($final_image));
+
+            // Список выбранных сборок/типов товара (мультиселект tip_tovar_tov[])
+            $trees = isset($_POST['tip_tovar_tov']) ? (array)$_POST['tip_tovar_tov'] : array();
+            $trees = array_values(array_unique(array_filter(array_map('intval', $trees), function($v){ return $v > 0; })));
+
             //insert form data in the database
             try{
                 $mysqli->begin_transaction();
 
-                $insert = $mysqli->query("INSERT INTO products (name, description, price, image, f_id) VALUES ('".$name."','".$description."','".$price."','".strtolower($final_image)."','".$filter."')");
+                $insert = $mysqli->query("INSERT INTO products (name, description, price, image, f_id) VALUES ('".$name."','".$description."','".$price."','".$final_image_db."','".$filter."')");
 
                 if(!$insert){
                     throw new Exception('Ошибка добавления товара: '.$mysqli->error);
                 }
                 $prod_id = $mysqli->insert_id;
 
-                $tree_id = 0;
-                if($_POST['tip_tovar_tov'] != 0) $tree_id = $_POST['tip_tovar_tov'];
-
-                if($tree_id == 0){
-                    throw new Exception('Не выбран товар или категория');
+                if(count($trees) == 0){
+                    throw new Exception('Не выбрана ни одна сборка/тип товара');
                 }
 
-                if(!$mysqli->query("INSERT INTO `tree_prod` (`tree_id`, `prod_id`) VALUES ($tree_id,$prod_id)")){
-                    throw new Exception('Ошибка добавления связи: '.$mysqli->error);
+                foreach($trees as $tree_id){
+                    if(!$mysqli->query("INSERT INTO `tree_prod` (`tree_id`, `prod_id`) VALUES ($tree_id,$prod_id)")){
+                        throw new Exception('Ошибка добавления связи: '.$mysqli->error);
+                    }
                 }
 
                 $mysqli->commit();

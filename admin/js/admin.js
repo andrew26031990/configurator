@@ -394,7 +394,7 @@ $(document).ready(function() {
                   else if(data == 'Неверное расширение картинки')
                   {
                     alert(data);
-                  }else if(data == 'Товар успешно добавлен в базу'){
+                  }else if(data == 'Товар успешно добавлен в базу, связь добавлена'){
                       alert(data);
                      $("#addProduct")[0].reset();
                      window.location.reload();
@@ -458,13 +458,28 @@ $(document).ready(function() {
             $('#editProduct').find('input[name=price]').val(price);
             $('#editProduct').find('input[name=idTovara]').val(id);
             $('#editProduct').find('input[name=oldImg]').val(oldImg);
-            var optionsList = $('#editProduct select option');
+
+            // Проставляем фильтр — только в селекте фильтра
+            var optionsList = $('#editProduct select[name=filter] option');
             for(var i=0;i<optionsList.length;i++){
-                if(optionsList[i].text == filter){
-                    $(optionsList[i]).attr('selected', 'selected');
-                    return;
-                }
+                $(optionsList[i]).prop('selected', optionsList[i].text == filter);
             }
+
+            // Подгружаем текущие сборки/типы товара в мультиселект
+            $('#editProduct_trees option').prop('selected', false);
+            $.ajax({
+                url: "../modules/getProductTrees.php",
+                type: "POST",
+                data: { prod_id: id },
+                success: function(data){
+                    var ids = (typeof data === 'string') ? JSON.parse(data) : data;
+                    $('#editProduct_trees option').prop('selected', false);
+                    for(var k=0;k<ids.length;k++){
+                        $('#editProduct_trees option[value="'+ids[k]+'"]').prop('selected', true);
+                    }
+                },
+                error: function(e){ alert(e.toString()); }
+            });
             //$('#editProduct').find('select').find('option:contains('+filter+')').attr('selected','selected');
             //$('#editProduct select').find('option').text('nvidia').attr('selected','selected');
        }));

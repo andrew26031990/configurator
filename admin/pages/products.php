@@ -42,21 +42,18 @@
                 </select>
             </div>-->
             <div class="form-group">
-                <label for="levels2">Выберите сборку</label>
-                <select class="form-control" name="sborka_tov" id="sborka2">
-                    <option value="0">Выберите сборку</option>
-                    <?php $node = getNodes($mysqli, 1);
-                    foreach ($node as $item){
-                        ?>
-                        <option value="<?php echo $item['id']; ?>"><?php echo $item['name']; ?></option>
+                <label for="tip_tovara_multi">Выберите сборки и типы товара (можно несколько)</label>
+                <select class="form-control" name="tip_tovar_tov[]" id="tip_tovara_multi" multiple size="12">
+                    <?php $groups = getProductTypesGrouped($mysqli);
+                    foreach ($groups as $g){ ?>
+                        <optgroup label="<?php echo htmlspecialchars($g['build']); ?>">
+                            <?php foreach ($g['types'] as $t){ ?>
+                                <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
+                            <?php } ?>
+                        </optgroup>
                     <?php } ?>
                 </select>
-            </div>
-            <div class="form-group">
-                <label for="levels2">Выберите тип товара</label>
-                <select class="form-control" name="tip_tovar_tov" id="tip_tovara2">
-                    <option value="0">Выберите тип товара</option>
-                </select>
+                <small class="form-text text-muted">Удерживайте Ctrl (⌘ на Mac), чтобы выбрать несколько сборок/типов.</small>
             </div>
             <div class="form-group">
                 <div class="row-fluid">

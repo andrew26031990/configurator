@@ -34,6 +34,20 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="editProduct_trees">Сборки / типы товара (можно несколько)</label>
+                        <select class="form-control" name="tip_tovar_tov[]" id="editProduct_trees" multiple size="12">
+                            <?php $editGroups = getProductTypesGrouped($mysqli);
+                            foreach ($editGroups as $g){ ?>
+                                <optgroup label="<?php echo htmlspecialchars($g['build']); ?>">
+                                    <?php foreach ($g['types'] as $t){ ?>
+                                        <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
+                                    <?php } ?>
+                                </optgroup>
+                            <?php } ?>
+                        </select>
+                        <small class="form-text text-muted">Удерживайте Ctrl (⌘ на Mac), чтобы выбрать несколько сборок/типов.</small>
+                    </div>
                     <input type="hidden" name="idTovara" value=""/>
                     <input type="hidden" name="oldImg" value=""/>
                     <div class="form-group">

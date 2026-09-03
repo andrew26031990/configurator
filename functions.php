@@ -194,6 +194,40 @@ function getNodes($mysqli, $level){
     return $cat;
 }
 
+/**
+ * Возвращает типы товара, сгруппированные по сборкам (для <optgroup> в мультиселекте).
+ * Структура: [ ['build' => 'Игровой профи', 'types' => [ ['id'=>.., 'name'=>..], ... ] ], ... ]
+ */
+function getProductTypesGrouped($mysqli){
+    $groups = array();
+    $builds = $mysqli->query("SELECT id, name FROM `tree` WHERE parent_id = 1 ORDER BY sort");
+    while($b = $builds->fetch_assoc()){
+        $buildId = (int)$b['id'];
+        $types = array();
+        $tres = $mysqli->query("SELECT id, name FROM `tree` WHERE parent_id IN (SELECT id FROM `tree` WHERE parent_id = $buildId) ORDER BY sort");
+        while($t = $tres->fetch_assoc()){
+            $types[] = array("id" => $t['id'], "name" => $t['name']);
+        }
+        if(count($types) > 0){
+            $groups[] = array("build" => $b['name'], "types" => $types);
+        }
+    }
+    return $groups;
+}
+
+/**
+ * Возвращает массив tree_id (узлов типа товара), к которым привязан товар.
+ */
+function getProductTreeIds($mysqli, $prod_id){
+    $prod_id = (int)$prod_id;
+    $ids = array();
+    $res = $mysqli->query("SELECT tree_id FROM `tree_prod` WHERE prod_id = $prod_id");
+    while($row = $res->fetch_assoc()){
+        $ids[] = (int)$row['tree_id'];
+    }
+    return $ids;
+}
+
 function getTreeFilterRelations($mysqli){ 
     $sql = "SELECT tf.id, (SELECT name from `tree` where link = t.group_id) as sborka, t.name, f.f_name, tf.tree_id, tf.filter_id FROM `tree_filter` as tf join `tree` as t on tf.tree_id = t.id join `filters` as f on tf.filter_id = f.id";
     $res = $mysqli->query($sql);

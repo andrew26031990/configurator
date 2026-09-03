@@ -45,7 +45,7 @@
                     </div>
                     <div class="form-group">
                         <label for="picture">Описание сборки</label>
-                        <div id="editor">
+                        <div>
                             <textarea type="text" class="form-control" name="edit_description" required></textarea>
                         </div>
 
@@ -108,5 +108,33 @@
     }
 </script>
 <script>
-    CKEDITOR.replace( 'editor' );
+    /*
+     * CKEDITOR.replace() — API четвёртой версии, а подключён CKEditor 5:
+     * отсюда была ошибка "CKEDITOR is not defined". Вдобавок вызов
+     * указывал на div-обёртку, а не на textarea, поэтому даже в четвёртой
+     * версии введённый текст не попал бы в форму.
+     */
+    // Скрипт CKEditor подключается ниже по документу (admin/pages/scripts.php).
+    document.addEventListener('DOMContentLoaded', function () {
+    ClassicEditor
+        .create(document.querySelector('#editSborka textarea[name="edit_description"]'))
+        .then(function (editor) {
+            // Форма отправляется через new FormData(this) — держим textarea
+            // в актуальном состоянии, не полагаясь на порядок обработчиков.
+            editor.model.document.on('change:data', function () {
+                editor.updateSourceElement();
+            });
+
+            // Модалку наполняет admin.js, подставляя значение в textarea.
+            // Делегированный обработчик срабатывает после него, поэтому
+            // здесь значение уже на месте — переносим его в редактор.
+            $(document).on('click', '.edit_sborka', function () {
+                var value = $('#editSborka textarea[name="edit_description"]').val();
+                editor.setData(value || '');
+            });
+        })
+        .catch(function (e) {
+            console.error('CKEditor:', e);
+        });
+    });
 </script>

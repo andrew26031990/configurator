@@ -92,7 +92,9 @@ $(".list a").click(function () {
       console.log(sel_quantity);
       var checked = "";
       var selected = "";
-      var myObj = $.parseJSON(response);
+      // Сервер отдаёт application/json, поэтому jQuery уже вернул объект.
+      // Строка возможна на старых ответах — обрабатываем оба случая.
+      var myObj = typeof response === "string" ? JSON.parse(response) : response;
       $("#" + component + " .inner_2 .main-list").remove();
       $("#" + component + " .inner_2").append('<ul class="main-list"></ul>');
       if (sel_price.has(component)) {

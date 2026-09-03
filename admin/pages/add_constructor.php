@@ -77,5 +77,31 @@
     }
 </script>
 <script>
-    CKEDITOR.replace( 'editor' );
+    /*
+     * Подключён CKEditor 5 (см. admin/pages/scripts.php), а вызывался
+     * CKEDITOR.replace() — это API четвёртой версии, в пятой глобального
+     * CKEDITOR не существует. Отсюда была ошибка "CKEDITOR is not defined",
+     * и редактор не поднимался вовсе.
+     */
+    // Скрипт CKEditor подключается ниже по документу (admin/pages/scripts.php),
+    // поэтому инициализируемся не раньше, чем разобран весь DOM.
+    document.addEventListener('DOMContentLoaded', function () {
+    ClassicEditor
+        .create(document.querySelector('#addSborka textarea[name="description"]'))
+        .then(function (editor) {
+            /*
+             * Форма уходит через new FormData(this), то есть значение
+             * берётся из самой textarea. CKEditor 5 держит текст в своём
+             * contenteditable и переносит его в textarea только при
+             * нативной отправке формы — поэтому синхронизируем на каждое
+             * изменение, не полагаясь на порядок обработчиков submit.
+             */
+            editor.model.document.on('change:data', function () {
+                editor.updateSourceElement();
+            });
+        })
+        .catch(function (e) {
+            console.error('CKEditor:', e);
+        });
+    });
 </script>

@@ -563,7 +563,10 @@ h2:after { content: ''; background: #27262C; width: -webkit-calc(100% - 20px); w
 
 .main-list { margin-top: 0 !important; height: auto; overflow: hidden; padding-bottom: 30px; }
 
-.main-list li { margin-bottom: 0 !important; padding: 10px 30px 10px 20px; vertical-align: middle; width: 100%; position: relative; }
+/* Строка товара — две колонки: название тянется, цена держит свою ширину.
+   Раньше .product-block занимал 100% ширины, а .price-block лежал поверх
+   через position:absolute, поэтому длинные названия заезжали под цену. */
+.main-list li { margin-bottom: 0 !important; padding: 10px 30px 10px 20px; vertical-align: middle; width: 100%; position: relative; display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex; -webkit-box-align: center; -webkit-align-items: center; -ms-flex-align: center; align-items: center; gap: 15px; }
 
 .float-right { float: right; }
 
@@ -702,15 +705,15 @@ h2:after { content: ''; background: #27262C; width: -webkit-calc(100% - 20px); w
 */
 label { position: relative; font-size: 16px; color: #fff; display: -webkit-box; display: -webkit-flex; display: -ms-flexbox; display: flex; -webkit-box-align: center; -webkit-align-items: center; -ms-flex-align: center; align-items: center; }
 
-label a.info { display: inline-block !important; padding: 0 !important; margin-left: 4px; position: relative; top: -4px; }
+label a.info { display: inline-block !important; padding: 0 !important; margin-left: 4px; position: relative; top: -4px; -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto; }
 
-.product-block { display: inline-block; vertical-align: top; width: 100%; padding-left: 9px; }
+.product-block { display: inline-block; vertical-align: top; width: auto; padding-left: 9px; -webkit-box-flex: 1; -webkit-flex: 1 1 auto; -ms-flex: 1 1 auto; flex: 1 1 auto; min-width: 0; }
 
-.price-block { font-size: 16px; color: #fff; display: inline-block; cursor: pointer; position: absolute; right: 15px; top: 50%; -webkit-transform: translateY(-50%); -ms-transform: translateY(-50%); transform: translateY(-50%); }
+.price-block { font-size: 16px; color: #fff; display: inline-block; cursor: pointer; position: static; -webkit-transform: none; -ms-transform: none; transform: none; -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto; margin-left: auto; white-space: nowrap; text-align: right; }
 
 input[type="radio"], input[type="checkbox"] { opacity: 0; position: absolute; left: 0; width: 100%; z-index: 2; cursor: pointer; }
 
-input[type="radio"] + label span:nth-of-type(1), input[type="checkbox"] + label span:nth-of-type(1) { display: inline-block; width: 20px; height: 20px; background: #27262C; cursor: pointer; position: relative; margin-right: 20px; top: -2px; }
+input[type="radio"] + label span:nth-of-type(1), input[type="checkbox"] + label span:nth-of-type(1) { display: inline-block; -webkit-flex: 0 0 auto; -ms-flex: 0 0 auto; flex: 0 0 auto; width: 20px; height: 20px; background: #27262C; cursor: pointer; position: relative; margin-right: 20px; top: -2px; }
 
 input[type="radio"] + label span:nth-of-type(1):after, input[type="checkbox"] + label span:nth-of-type(1):after { content: ''; width: 17px; height: 17px; -webkit-border-radius: 100%; border-radius: 100%; position: absolute; top: 0; left: 6px; visibility: hidden; background: url(../images/ok.svg) no-repeat center; }
 
@@ -1016,7 +1019,9 @@ img.mfp-img { -webkit-box-sizing: border-box; box-sizing: border-box; padding: 4
   .center-block { width: 70%; }
   .left-td { width: 60%; }
   .right-td { width: 40%; }
-  .price-block { position: static; float: right; margin-top: 15px; }
+  .main-list li { -webkit-flex-wrap: wrap; -ms-flex-wrap: wrap; flex-wrap: wrap; }
+  .product-block { -webkit-flex: 1 1 100%; -ms-flex: 1 1 100%; flex: 1 1 100%; }
+  .price-block { position: static; float: none; margin-top: 15px; margin-left: auto; }
   .config-block { margin-top: 60px; }
   .img-holder:after { width: 160px; height: 160px; }
   aside.fixed { position: relative !important; }

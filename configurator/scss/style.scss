@@ -431,12 +431,18 @@ h2 {
     padding-bottom: 30px;
 }
 
+/* Строка товара — две колонки: название тянется, цена держит свою ширину.
+   Раньше .product-block занимал 100% ширины, а .price-block лежал поверх
+   через position:absolute, поэтому длинные названия заезжали под цену. */
 .main-list li {
     margin-bottom: 0 !important;
     padding: 10px 30px 10px 20px;
     vertical-align: middle;
     width: 100%;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 
@@ -637,13 +643,16 @@ label a.info {
     margin-left: 4px;
     position: relative;
     top: -4px;
+    flex: 0 0 auto; // иконка не должна сжиматься при длинном названии
 }
 
 .product-block {
     display: inline-block;
     vertical-align: top;
-    width: 100%;
+    width: auto;
     padding-left: 9px;
+    flex: 1 1 auto;
+    min-width: 0; // без этого длинный текст не переносится внутри flex
 }
 
 .price-block {
@@ -652,11 +661,12 @@ label a.info {
     color: #fff;
     display: inline-block;
     cursor: pointer;
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-    transform: translateY(-50%);
+    position: static;
+    transform: none;
+    flex: 0 0 auto;
+    margin-left: auto;
+    white-space: nowrap;
+    text-align: right;
 }
 
 input[type="radio"] {
@@ -670,6 +680,7 @@ input[type="radio"] {
 
 input[type="radio"]+label span:nth-of-type(1) {
     display: inline-block;
+    flex: 0 0 auto; // квадратик чекбокса не должен сплющиваться
     width: 20px;
     height: 20px;
     background: #27262C;
@@ -1517,10 +1528,20 @@ img.mfp-img {
         width: 40%;
     }
 
+    // На узких экранах цена уходит на свою строку под названием.
+    .main-list li {
+        flex-wrap: wrap;
+    }
+
+    .product-block {
+        flex: 1 1 100%;
+    }
+
     .price-block {
         position: static;
-        float: right;
+        float: none;
         margin-top: 15px;
+        margin-left: auto;
     }
 
     .config-block {

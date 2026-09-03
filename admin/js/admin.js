@@ -255,7 +255,7 @@ $(document).ready(function() {
                 },
                 success: function(data)
                    {
-                       var myObj = $.parseJSON(data);
+                       var myObj = typeof data === "string" ? JSON.parse(data) : data;
                        $('#tip_tovara2').find('option').remove();
                        $('#tip_tovara2').append('<option value="0">Выберите тип товара</option>');
                        for (var i=0; i<myObj.length; i++) {
@@ -287,7 +287,7 @@ $(document).ready(function() {
                 },
                 success: function(data)
                    {
-                       var myObj = $.parseJSON(data);
+                       var myObj = typeof data === "string" ? JSON.parse(data) : data;
                        $('#tip_tovara1').find('option').remove();
                        $('#tip_tovara1').append('<option>Выберите тип товара</option>');
                        for (var i=0; i<myObj.length; i++) {
@@ -516,8 +516,8 @@ $(document).ready(function() {
 
     $("#editSborka").on('submit',(function(e) {
         e.preventDefault();
-        alert('befin');
-        console.log(new FormData(this));
+
+
         $.ajax({
             url: "../modules/editSborka.php",
             type: "POST",
@@ -636,7 +636,7 @@ $(document).ready(function() {
                  },
                  success: function(data)
                     {
-                        var myObj = $.parseJSON(data);
+                        var myObj = typeof data === "string" ? JSON.parse(data) : data;
                         $('#cat_filter_table').DataTable( {
                             paging: false,
                             searching: false,
@@ -879,7 +879,7 @@ function showGraph()
         $.post("../modules/ordersGraph.php",
         function (data)
         {
-            var a = JSON.parse(data);
+            var a = typeof data === "string" ? JSON.parse(data) : data;
             console.log(a);
              var date = []; //mark
             var quantity = [];

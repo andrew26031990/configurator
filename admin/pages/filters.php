@@ -18,16 +18,16 @@
                 <?php $filters = getAllFilters($mysqli); foreach ($filters as $item){ ?>
                     <tr>
                         <td>
-                            <?php echo $item['id']; ?>
+                            <?php echo e($item['id']); ?>
                         </td>
                         <td>
-                            <?=$item['f_name']; ?>
+                            <?= e($item['f_name']); ?>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-danger delete_filter">Delete</button>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_filter">Delete</button>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id'].':'.$item['f_name']; ?>" type="button" class="btn btn-info edit_filter">Edit</button>
+                            <button dataId="<?php echo e($item['id'] . ':' . $item['f_name']); ?>" type="button" class="btn btn-info edit_filter">Edit</button>
                         </td>
                     </tr>
                 <?php } ?>

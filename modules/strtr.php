@@ -98,5 +98,22 @@ function translit($str)
         );
         return strtr($str,$tr);
     }
-    
-    echo translit($_POST['strtr']);
+
+/*
+ * Файл одновременно библиотека (его подключают addTreeNode / insertNode /
+ * renameNode) и публичный эндпоинт для main.js. Раньше echo в конце
+ * срабатывал в обоих случаях и подмешивал мусор в ответы админских модулей.
+ */
+if (realpath(__FILE__) === realpath((string) $_SERVER['SCRIPT_FILENAME'])) {
+    // Нужен ради заглушек mbstring, когда файл вызывают напрямую из main.js.
+    require_once __DIR__ . '/../security.php';
+
+    header('Content-Type: text/plain; charset=UTF-8');
+
+    $input = isset($_POST['strtr']) && is_scalar($_POST['strtr'])
+        ? mb_substr(trim((string) $_POST['strtr']), 0, 200, 'UTF-8')
+        : '';
+
+    // Ответ уходит в href="#...", поэтому оставляем только безопасные символы.
+    echo preg_replace('/[^A-Za-z0-9_-]/', '', translit($input));
+}

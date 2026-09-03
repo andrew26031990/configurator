@@ -1,47 +1,59 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-$valid_extensions = array('jpeg', 'jpg', 'png', 'gif', 'bmp'); // valid extensions
-$path = '../configurator/images/sborki/'; // upload directory
-if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['link'] != '')
-{
-    $img = $_FILES['image']['name'];
-    $tmp = $_FILES['image']['tmp_name'];
-    // get uploaded file's extension
-    $ext = strtolower(pathinfo($img, PATHINFO_EXTENSION));
-    // can upload same image using rand function
-    $final_image = rand(1000,1000000).$img;
-    // check's valid format
-    if(in_array($ext, $valid_extensions))
-    {
-        $path = $path.strtolower($final_image);
-        if(move_uploaded_file($tmp,$path))
-        {
-            //echo "<img src='$path' />";
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $description = $_POST['description'];
-            $link = $_POST['link'];
-            $category = $_POST['category'];
-            $categoryId = 97;
-            //include database configuration file
-            include_once '../functions.php';
-            include_once 'messages_to_telegram.php';
-            //insert form data in the database
-            try{
-                $insert = $mysqli->query("INSERT INTO sborki (title, description, price, image, link, category, category_id) VALUES ('".$name."','".$description."','".$price."','".strtolower($final_image)."','".$link."','".$category."','".$categoryId."')");
-                //SendMessageToBot("<b>Название:</b> ".$name."\n<b>Цена:</b> ".$price."\n<b>Описание:</b>\n <i>".$description."</i>\n", $_SERVER['SERVER_NAME']."/images/products/".strtolower($final_image));
-                echo 'Сборка успешно добавлена в базу';
-            }catch(Exception $ex){
-                echo $ex->getMessage();
-            }
+$uploadDir = APP_ROOT . '/configurator/images/sborki';
 
-            //echo $insert?'ok':'err';
-        }
-    }
-    else
-    {
-        echo 'Неверное расширение картинки или не выбрана картинка товара';
-    }
-}else{
-    echo 'Не все поля заполнены';
+// category_id = 97 — узел "Готовые сборки" в таблице tree.
+const SBORKI_TREE_ID = 97;
+
+$title       = post_str('name', 300);
+$description = post_str('description', 65535);
+$price       = (float) str_replace(array(' ', ','), array('', '.'), post_str('price', 30));
+$link        = post_str('link', 65535);
+$category    = strtoupper(post_str('category', 200));
+
+if ($title === '' || $description === '' || $price <= 0 || $link === '') {
+    http_response_code(400);
+    exit('Не все поля заполнены');
+}
+
+if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+    http_response_code(400);
+    exit('Не выбрана картинка сборки');
+}
+
+$extension = strtolower((string) pathinfo((string) $_FILES['image']['name'], PATHINFO_EXTENSION));
+
+if (!is_valid_image_upload($_FILES['image']['tmp_name'], $extension)) {
+    http_response_code(400);
+    exit('Неверный формат картинки');
+}
+
+$fileName = random_image_name($extension);
+
+if (!move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . '/' . $fileName)) {
+    http_response_code(500);
+    exit('Не удалось сохранить картинку');
+}
+
+if (!harden_uploaded_image($uploadDir . '/' . $fileName, $extension)) {
+    delete_upload($uploadDir, $fileName);
+    http_response_code(400);
+    exit('Не удалось обработать картинку');
+}
+
+try {
+    db_exec(
+        $mysqli,
+        'INSERT INTO sborki (title, description, price, image, link, category, category_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)',
+        array($title, $description, $price, $fileName, $link, $category, SBORKI_TREE_ID)
+    );
+    echo 'Сборка успешно добавлена в базу';
+} catch (Throwable $e) {
+    delete_upload($uploadDir, $fileName);
+    error_log('addSborka: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при добавлении сборки';
 }

@@ -48,7 +48,7 @@
                     <?php $node = getNodes($mysqli, 1);
                     foreach ($node as $item){
                         ?>
-                        <option value="<?php echo $item['id']; ?>"><?php echo $item['name']; ?></option>
+                        <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name']); ?></option>
                     <?php } ?>
                 </select>
             </div>
@@ -66,7 +66,7 @@
                         <?php $filters = getAllFilters($mysqli);
                         foreach ($filters as $item){
                             ?>
-                            <option value="<?php echo $item['id']; ?>"><?php echo $item['f_name']; ?></option>
+                            <option value="<?php echo e($item['id']); ?>"><?php echo e($item['f_name']); ?></option>
                         <?php } ?>
                     </select>
                 </div>
@@ -100,26 +100,26 @@
                 <?php $products = getAllProducts($mysqli);foreach ($products as $item){ ?>
                     <tr>
                         <td>
-                            <?php echo $item['id']; ?>
+                            <?php echo e($item['id']); ?>
                         </td>
                         <td>
-                            <?=$item['name']; ?>
+                            <?= e($item['name']); ?>
                         </td>
                         <td>
-                            <?=$item['description']; ?>
+                            <?= e($item['description']); ?>
                         </td>
                         <td>
-                            <?=$item['price']; ?>
+                            <?= e($item['price']); ?>
                         </td>
-                        <td><img src="/configurator/images/products/<?=$item['image']; ?>" style="height: 85px;" /></td>
+                        <td><img src="/configurator/images/products/<?= e($item['image']); ?>" style="height: 85px;" /></td>
                         <td>
-                            <?=$item['f_name']; ?>
-                        </td>
-                        <td>
-                            <button dataId="<?php echo $item['id']; ?>:<?php echo $item['image']; ?>" type="button" class="btn btn-danger delete_prod">Delete</button>
+                            <?= e($item['f_name']); ?>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-info edit_prod" data-toggle="modal" data-target="#exampleModalEditProd">Edit</button>
+                            <button dataId="<?php echo e($item['id']); ?>:<?php echo e($item['image']); ?>" type="button" class="btn btn-danger delete_prod">Delete</button>
+                        </td>
+                        <td>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_prod" data-toggle="modal" data-target="#exampleModalEditProd">Edit</button>
                         </td>
                     </tr>
                 <?php } ?>

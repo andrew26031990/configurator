@@ -1,14 +1,19 @@
 <?php
-include '../functions.php';
-//$mask = "../images/products/rTZQZ2NIYSg.jpg";
-//if (file_exists($mask)) {unlink($mask); echo "OK";}else{echo $mask;}
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-  $filter_id = $_POST['filter_id'];
- $sql = "DELETE FROM filters WHERE id=$filter_id";
-  $QR = $mysqli->query($sql);
-  if($QR){
-      echo 'Фильтр успешно удален';   
-  }  
-  else {
-      echo 'Ошибка: '.$mysqli->error;
-  }
+$id = post_int('filter_id');
+
+if ($id === null || $id <= 0) {
+    http_response_code(400);
+    exit('Некорректный идентификатор фильтра');
+}
+
+try {
+    db_exec($mysqli, 'DELETE FROM filters WHERE id = ?', array($id));
+    echo 'Фильтр успешно удален';
+} catch (Throwable $e) {
+    error_log('deleteFilter: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при удалении фильтра';
+}

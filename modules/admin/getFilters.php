@@ -1,26 +1,20 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-include '../../functions.php';
-$param = '';
-if (isset($_POST['tree_id'])) {
-   $param = $_POST['tree_id'];
+require_once __DIR__ . '/../../functions.php';
+require_admin();
+
+$treeId = post_int('tree_id');
+
+if ($treeId === null || $treeId <= 0) {
+    json_out(array());
+    return;
 }
 
-$sql = "select f.id, f.f_name from tree i join tree_filter tf on i.id=tf.tree_id join filters f on f.id=tf.filter_id WHERE tf.tree_id = '$param'";
-$res = $mysqli->query($sql);
-
-//Создаем масив где ключ массива является ID меню
-$array = array();
-
-while($row = $res->fetch_assoc()){
-    $id = $row['id'];
-    $name = $row['f_name'];
-    $array[] = array("id" => $id,
-                    "name" => $name);
-}
-
-var_dump($array);
-die();
-echo json_encode($array);
-?>
+json_out(db_rows(
+    $mysqli,
+    'SELECT f.id, f.f_name
+       FROM tree t
+       JOIN tree_filter tf ON t.id = tf.tree_id
+       JOIN filters     f  ON f.id = tf.filter_id
+      WHERE tf.tree_id = ?',
+    array($treeId)
+));

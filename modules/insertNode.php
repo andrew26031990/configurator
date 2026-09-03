@@ -1,37 +1,42 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_once __DIR__ . '/strtr.php';
+require_admin();
 
-include '../functions.php';
-include 'strtr.php';
+$parentId = post_int('node_id');
+$level    = post_int('upcomingNodeLevel');
+$name     = post_str('nodeName', 200);
 
-$nodeId = $_POST['node_id'];
-$upcomingNodeLevel = $_POST['upcomingNodeLevel'];
-$nodeName = $_POST['nodeName'];
-//$sql = "";
-
-if($upcomingNodeLevel == 3 ){
-    $translit = translit($nodeName);
-    if($mysqli->query("INSERT INTO `tree` (image, name, parent_id, level, group_id, link, translit, sort, enabled)
-    VALUES ('', '$nodeName', '$nodeId', '$upcomingNodeLevel', (SELECT t.group_id FROM `tree` as t WHERE t.id = '$nodeId'), '','$translit', 0, 1)")){
-        echo 'Узел добавлен';
-    }else{
-        echo $mysqli->error;
-    }
-}else if($upcomingNodeLevel == 2){
-    if($mysqli->query("INSERT INTO `tree` (image, name, parent_id, level, group_id, link, translit, sort, enabled)
-    VALUES ('', '$nodeName', '$nodeId', '$upcomingNodeLevel', (SELECT t.group_id FROM `tree` as t WHERE t.id = '$nodeId'), '','', 0, 1)")){
-        echo 'Узел добавлен';
-    }else{
-        echo $mysqli->error;
-    }
-}else if($upcomingNodeLevel == 1){
-    $translit = translit($nodeName);
-    if($mysqli->query("INSERT INTO `tree` (image, name, parent_id, level, group_id, link, translit, sort, enabled)
-    VALUES ('', '$nodeName', '$nodeId', '$upcomingNodeLevel', '$translit', '$translit','', 0, 1)")){
-        echo 'Узел добавлен';
-    }else{
-        echo $mysqli->error;
-    }
+if ($parentId === null || $parentId <= 0 || $name === '' || !in_array($level, array(1, 2, 3), true)) {
+    http_response_code(400);
+    exit('Некорректные данные узла');
 }
 
+$slug = translit($name);
 
+// Уровень 1 — корень категории конфигуратора, у него собственный group_id.
+// Уровни 2 и 3 наследуют group_id родителя.
+if ($level === 1) {
+    $groupId  = $slug;
+    $link     = $slug;
+    $translit = '';
+} else {
+    $parent   = db_row($mysqli, 'SELECT group_id FROM `tree` WHERE id = ?', array($parentId));
+    $groupId  = $parent ? (string) $parent['group_id'] : '';
+    $link     = '';
+    $translit = ($level === 3) ? $slug : '';
+}
 
+try {
+    db_exec(
+        $mysqli,
+        'INSERT INTO `tree` (image, name, parent_id, level, group_id, link, translit, sort, enabled)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)',
+        array('', $name, $parentId, $level, $groupId, $link, $translit)
+    );
+    echo 'Узел добавлен';
+} catch (Throwable $e) {
+    error_log('insertNode: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при добавлении узла';
+}

@@ -1,22 +1,34 @@
 <?php
-//die('Админка на техническом обслуживании');
-include 'functions.php';
-//include 'modules/backup.php';
-session_start();
-ini_set('display_errors', -1);
-//unset($_SESSION['flag']);
-if (!isset($_SESSION['username'])) {
-    header("Location: /login.php");
+require_once __DIR__ . '/functions.php';
+
+deny_framing();
+
+if (!is_admin()) {
+    header('Location: /login.php');
     exit();
 }
 
-if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
+if (isset($_GET['view']) && $_GET['view'] === 'exit_cab') {
     exit_cab();
-    header("Location: /login.php");
+    header('Location: /login.php');
     exit();
 }
-//$catid = getCatId($mysqli, $_GET['cat']);
 
+/*
+ * Имя подключаемой страницы приходит из ?view=. Раньше оно попадало
+ * в include как есть, то есть позволяло подключить любой .php на диске.
+ */
+$view = isset($_GET['view']) ? (string) $_GET['view'] : 'dashboard';
+
+if (!preg_match('/^[a-zA-Z0-9_-]+$/', $view)) {
+    $view = 'dashboard';
+}
+
+$viewFile = __DIR__ . '/admin/pages/' . $view . '.php';
+
+if (!is_file($viewFile)) {
+    $viewFile = __DIR__ . '/admin/pages/dashboard.php';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +62,7 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
 <div id="wrapper">
 
     <!-- Sidebar -->
-    <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/sidebar.php'); ?>
+    <?php include(__DIR__ . '/admin/pages/sidebar.php'); ?>
     <!-- End of Sidebar -->
 
     <!-- Content Wrapper -->
@@ -60,19 +72,12 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
         <div id="content">
 
             <!-- Topbar -->
-            <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/topbar.php'); ?>
+            <?php include(__DIR__ . '/admin/pages/topbar.php'); ?>
             <!-- End of Topbar -->
 
             <!-- Begin Page Content -->
             <div class="container-fluid">
-                <?php
-                    if(!isset($_GET['view']))
-                      {
-                          include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/dashboard.php');
-                      }else {
-                          include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/'.$_GET['view'].'.php');
-                      }
-                ?>
+                <?php include $viewFile; ?>
             </div>
             <!-- /.container-fluid -->
 
@@ -80,7 +85,7 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
         <!-- End of Main Content -->
 
         <!-- Footer -->
-        <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/footer.php'); ?>
+        <?php include(__DIR__ . '/admin/pages/footer.php'); ?>
         <!-- End of Footer -->
 
     </div>
@@ -95,9 +100,9 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
 </a>
 
 <!-- Modals-->
-<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modals.php'); ?>
+<?php include(__DIR__ . '/admin/modals/modals.php'); ?>
 <!-- End Modals-->
-<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/scripts.php'); ?>
+<?php include(__DIR__ . '/admin/pages/scripts.php'); ?>
 
 
 </body>

@@ -1,2 +1,11 @@
 .idea
 configurator/images
+
+# Секреты и локальные настройки — никогда в git
+config.local.php
+settings.local.ini
+
+# Мусор, которому не место в репозитории и тем более в вебруте
+*.sql
+error_log
+*.log

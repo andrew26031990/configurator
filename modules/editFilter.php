@@ -1,15 +1,20 @@
 <?php
-include '../functions.php';
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-$filter_id = $_POST['filter_id'];
-$f_name = $_POST['f_name'];
+$id   = post_int('filter_id');
+$name = post_str('f_name', 200);
 
-$sql = "UPDATE filters SET f_name = '$f_name' where id='$filter_id'";
-$QR = $mysqli->query($sql);
-if($QR){
-    echo 'Название фильтра обновлено';
-}  
-else {
-    echo 'Ошибка: '.$mysqli->error;
+if ($id === null || $id <= 0 || $name === '') {
+    http_response_code(400);
+    exit('Не все поля заполнены');
 }
 
+try {
+    db_exec($mysqli, 'UPDATE filters SET f_name = ? WHERE id = ?', array($name, $id));
+    echo 'Название фильтра обновлено';
+} catch (Throwable $e) {
+    error_log('editFilter: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при обновлении фильтра';
+}

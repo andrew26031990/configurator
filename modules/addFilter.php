@@ -1,16 +1,19 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-if($_POST['filter'] !='')
-{
-    $name = $_POST['filter'];
-    include_once '../functions.php';
-    //insert form data in the database
-    try{
-        $insert = $mysqli->query("INSERT INTO filters (f_name) VALUES ('".$name."')");
-        echo 'Фильтр успешно добавлен в базу';
-    }catch(Exception $ex){
-        echo $e->getMessage();
-    }
-}else{
-    echo 'Не все поля заполнены';
+$name = post_str('filter', 200);
+
+if ($name === '') {
+    http_response_code(400);
+    exit('Не все поля заполнены');
+}
+
+try {
+    db_exec($mysqli, 'INSERT INTO filters (f_name) VALUES (?)', array($name));
+    echo 'Фильтр успешно добавлен в базу';
+} catch (Throwable $e) {
+    error_log('addFilter: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при добавлении фильтра';
 }

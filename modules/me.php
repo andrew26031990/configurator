@@ -1,24 +1,19 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-include '../functions.php';
-header('Content-Type: application/json; charset=UTF-8');
-
-//Выборка из дерева
-$sql = "SELECT * FROM products";
-$res = $mysqli->query($sql);
-
-$cat = array();
-while($data = mysqli_fetch_assoc($res)){
-    $thisref = &$refs[$data['id']];
-    $thisref['id'] = $data['id']; // if id is 0  , it's a root node, replace with '#'
-    $thisref['name'] = $data['name'];// if parent id is 0, it's a root node, replace with '#'
-    $thisref['description'] = $data['description'];
-    $thisref['image'] = $data['image'];
-    $thisref['price'] = $data['price'];
-    $thisref['edit'] = $data['id'];
-    $cat[] = &$thisref; 
-}
-$json_data = array(
-    "data" => $cat
-);
-echo json_encode($json_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+json_out(array(
+    'data' => array_map(
+        function (array $row) {
+            return array(
+                'id'          => $row['id'],
+                'name'        => $row['name'],
+                'description' => $row['description'],
+                'image'       => $row['image'],
+                'price'       => $row['price'],
+                'edit'        => $row['id'],
+            );
+        },
+        db_rows($mysqli, 'SELECT id, name, description, image, price FROM products')
+    ),
+));

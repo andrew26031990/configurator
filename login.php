@@ -1,14 +1,13 @@
 <?php
+require_once __DIR__ . '/security.php';
 
-session_start();
-ini_set('display_errors', -1);
+deny_framing();
+secure_session_start();
 
-if (isset($_SESSION['username'])) {
-    header("Location: /admin.php");
+if (is_admin()) {
+    header('Location: /admin.php');
     exit();
 }
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +28,7 @@ if (isset($_SESSION['username'])) {
 
   <!-- Custom styles for this template-->
   <link href="admin/css/sb-admin-2.min.css" rel="stylesheet">
-<script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 
 <body class="bg-gradient-primary">
@@ -59,7 +58,7 @@ if (isset($_SESSION['username'])) {
                       <input type="password" class="form-control form-control-user" id="exampleInputPassword" name="password" placeholder="Password">
                     </div>
                     <div class="checkbox mb-3" style="text-align: center;">
-                        <div class="g-recaptcha" data-sitekey="6LfLXM0UAAAAAG34WmIzuvGAHeAgLz33y24i-6bq">
+                        <div class="g-recaptcha" data-sitekey="<?= e(config_get('recaptcha.sitekey')); ?>">
                       </div>
                     <button href="index.html" class="btn btn-primary btn-user btn-block" type="submit" name="enter" style="margin-top:15px;">
                       Login
@@ -79,9 +78,20 @@ if (isset($_SESSION['username'])) {
                              {
                                 if (data === 'Login') {
                                   window.location = '/admin.php';
-                                }else{
-                                    alert('Вы робот' + data);
+                                } else if (data === 'incorrectCaptcha') {
+                                  alert('Подтвердите, что вы не робот');
+                                  if (window.grecaptcha) { grecaptcha.reset(); }
+                                } else {
+                                  alert('Неверный логин или пароль');
+                                  if (window.grecaptcha) { grecaptcha.reset(); }
                                 }
+                             },
+                             error: function(xhr)
+                             {
+                                alert(xhr.status === 429
+                                  ? 'Слишком много попыток входа. Попробуйте позже.'
+                                  : 'Не удалось выполнить вход');
+                                if (window.grecaptcha) { grecaptcha.reset(); }
                              }
                          });
                        });

@@ -29,7 +29,7 @@
                                 <?php $filters = getAllFilters($mysqli);
                                 foreach ($filters as $item){
                                     ?>
-                                    <option value="<?php echo $item['id']; ?>"><?php echo $item['f_name']; ?></option>
+                                    <option value="<?php echo e($item['id']); ?>"><?php echo e($item['f_name']); ?></option>
                                 <?php } ?>
                             </select>
                         </div>

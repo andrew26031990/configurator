@@ -16,7 +16,7 @@
                         <?php $node = getNodes($mysqli, 1);
                         foreach ($node as $item){
                             ?>
-                            <option value="<?php echo $item['id']; ?>"><?php echo $item['name']; ?></option>
+                            <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name']); ?></option>
                         <?php } ?>
                     </select>
                 </div>

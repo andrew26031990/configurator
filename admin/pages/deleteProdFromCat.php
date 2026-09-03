@@ -13,18 +13,18 @@
                 </tr>
                 </thead>
                 <?php $fT = getTreeProdRelations($mysqli); foreach ($fT as $item){ ?>
-                    <tr id="<?php echo $item['id']; ?>">
+                    <tr id="<?php echo e($item['id']); ?>">
                         <td>
-                            <?php echo $item['sborka']; ?>
+                            <?php echo e($item['sborka']); ?>
                         </td>
                         <td>
-                            <?=$item['name']; ?>
+                            <?= e($item['name']); ?>
                         </td>
                         <td>
-                            <?=$item['product']; ?>
+                            <?= e($item['product']); ?>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-danger delete_relation_prod_tree">Delete</button>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_relation_prod_tree">Delete</button>
                         </td>
                     </tr>
                 <?php } ?>

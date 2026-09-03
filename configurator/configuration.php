@@ -8,7 +8,7 @@
             ?>
             <div class="slide" data-items="<?php echo $i; ?>">
                 <a href="javascript:void(0);"><?php $rootNodeFirst = $item['id'];
-                    echo $item['name']; ?></a>
+                    echo e($item['name']); ?></a>
             </div>
             <?php $i++;
         } ?>
@@ -27,13 +27,11 @@
                     <?php
                     $rootNodeFirst = $item['id'];
                     $components = getRootNodesSecond($mysqli, $rootNodeFirst);
-                    foreach ($components as $item) {
+                    foreach ($components as $item_inner) {
                         ?>
                         <div class="slide">
-                            <a href="#<?php echo $item['translit']; ?>">
-                                <?php /*echo $item['image']; */
-                                ?>
-                                <?php echo $item['name']; ?>
+                            <a href="#<?php echo e($item_inner['translit']); ?>">
+                                <?php echo e($item_inner['name']); ?>
                             </a>
                         </div>
                     <?php } ?>
@@ -58,9 +56,9 @@
                         ?>
                         <li>
                             <a class="toggle" href="javascript:void(0);">
-                                <img src="configurator/images/soft1.png<?php echo $item['image']; ?>" />
+                                <img src="configurator/images/soft1.png<?php echo e($item['image']); ?>" alt="" />
                                 <?php $rootNodeFirst = $item['id'];
-                                echo $item['name']; ?>
+                                echo e($item['name']); ?>
                             </a>
                             <ul class="inner menuElems">
                                 <?php
@@ -68,7 +66,7 @@
                                 foreach ($components as $item) {
                                     ?>
                                     <li>
-                                        <a href="#"><?php echo $item['name']; ?></a>
+                                        <a href="#"><?php echo e($item['name']); ?></a>
                                     </li>
                                 <?php } ?>
                             </ul>
@@ -89,19 +87,19 @@
                 ?>
                 <div class="scrollbar-inner">
                     <table class="product-table <?php if ($onLoadcountable == 1) { ?>countable<?php } ?>"
-                           id="<?php echo $item['translit']; ?>">
+                           id="<?php echo e($item['translit']); ?>">
                         <tbody>
                         <tr>
                             <td class="left-td">
                                 <h2><?php $id = $item['id'];
-                                    echo $item['name']; ?></h2>
+                                    echo e($item['name']); ?></h2>
                                 <div class="left-td-inner">
                                     <!-- Табы - кнопки -->
                                     <div class="inner scroll-pane">
                                         <ul class="list filter">
                                             <li data-filter=".all">
-                                                <a href="javascript:void(0);" data-type="<?php echo $translit; ?>" filter-id="0000"
-                                                   data-id="<?php echo $id; ?>">Все</a>
+                                                <a href="javascript:void(0);" data-type="<?php echo e($translit); ?>" filter-id="0000"
+                                                   data-id="<?php echo e($id); ?>">Все</a>
                                             </li>
 
                                             <?php
@@ -109,9 +107,9 @@
                                             foreach ($filters as $item) {
                                                 ?>
                                                 <li data-filter=".asus">
-                                                    <a href="javascript:void(0);" data-id="<?php echo $id; ?>"
-                                                       data-type="<?php echo $translit; ?>"
-                                                       filter-id="<?php echo $item['id'] ?>"><?php echo $item['f_name']; ?></a>
+                                                    <a href="javascript:void(0);" data-id="<?php echo e($id); ?>"
+                                                       data-type="<?php echo e($translit); ?>"
+                                                       filter-id="<?php echo e($item['id']); ?>"><?php echo e($item['f_name']); ?></a>
                                                 </li>
                                             <?php } ?>
                                         </ul>
@@ -127,14 +125,14 @@
                                             ?>
                                             <li class="all asus">
                                                 <div class="product-block">
-                                                    <input type="checkbox" data="<?= $item['image']; ?>"
-                                                           id="<?= $item['id']; ?>" name="<?= $translit; ?>"
-                                                           value="<?php echo $item['price']; ?>"/>
-                                                    <label for="<?= $item['id']; ?>"
-                                                           data-name="<?php echo $item['name']; ?>">
+                                                    <input type="checkbox" data="<?= e($item['image']); ?>"
+                                                           id="<?= e($item['id']); ?>" name="<?= e($translit); ?>"
+                                                           value="<?php echo e($item['price']); ?>"/>
+                                                    <label for="<?= e($item['id']); ?>"
+                                                           data-name="<?php echo e($item['name']); ?>">
                                                         <span></span>
                                                         <select title="Выберите количество" class="select quantity"
-                                                                method="post" name="<?= $translit; ?>" <?php if ($translit !== 'monitor' && $translit !== 'operativnaya_pamyatj' && $translit !== 'ozu' && $translit !== 'jestkie_diski_HDD' && $translit !== 'jestkiy_disk') { ?> disabled <?php } ?>>
+                                                                method="post" name="<?= e($translit); ?>" <?php if ($translit !== 'monitor' && $translit !== 'operativnaya_pamyatj' && $translit !== 'ozu' && $translit !== 'jestkie_diski_HDD' && $translit !== 'jestkiy_disk') { ?> disabled <?php } ?>>
                                                             <option value="1" selected>1</option>
                                                             <option value="2">2</option>
                                                             <option value="3">3</option>
@@ -143,14 +141,12 @@
                                                             <option value="6">6</option>
                                                         </select>
 
-                                                        <?php echo $item['name']; ?>
-                                                       <a class="info" href="<?php echo $item['description']; ?>" style="z-index: 10;width: 20px;margin-left:5px;" target="_BLANK"><img src="configurator/images/info.svg" /></a>
+                                                        <?php echo e($item['name']); ?>
+                                                       <a class="info" href="<?php echo e_url($item['description']); ?>" style="z-index: 10;width: 20px;margin-left:5px;" target="_BLANK" rel="noopener"><img src="configurator/images/info.svg" alt="" /></a>
                                                     </label>
                                                 </div>
                                                 <div class="price-block">
-                                                    <?php echo $item['price']; ?>
-                                                    <!--UZS&nbsp;--><?php //echo money_format('%i ', $item['price']);
-                                                    ?>
+                                                    <?php echo e($item['price']); ?>
                                                 </div>
                                             </li>
                                         <?php } ?>
@@ -158,10 +154,10 @@
                                     <!-- / Табы - контент -->
                                 </div>
                             </td>
-                            <td class="right-td <?= $translit; ?>">
+                            <td class="right-td <?= e($translit); ?>">
                                 <div class="clearfix"></div>
                                 <div class="img-holder">
-                                    <img src="" alt="" class="zoom" data-magnify-src="configurator/images/products/<?= $item['image']; ?>"/>
+                                    <img src="" alt="" class="zoom" data-magnify-src="configurator/images/products/<?= e($item['image']); ?>"/>
                                 </div>
                             </td>
                         </tr>
@@ -177,8 +173,9 @@
             <div class="configuration-inner">
                 <div class="configuration-inner-inner">
                     <?php $title = getTitle($mysqli, $cat);
+                    $link = '';
                     foreach ($title as $item) { ?>
-                        <h3><?php echo $item['name'];
+                        <h3><?php echo e($item['name']);
                             $link = $item['name']; ?></h3>
                     <?php } ?>
                     <div class="config-img-outer">
@@ -263,11 +260,6 @@
                     <svg width="20" height="20" viewBox="0 0 28 26" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M16.272 5.451c-.176-.45-.272-.939-.272-1.451 0-2.208 1.792-4 4-4s4 1.792 4 4-1.792 4-4 4c-1.339 0-2.525-.659-3.251-1.67l-7.131 3.751c.246.591.382 1.239.382 1.919 0 .681-.136 1.33-.384 1.922l7.131 3.751c.726-1.013 1.913-1.673 3.253-1.673 2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4c0-.51.096-.999.27-1.447l-7.129-3.751c-.9 1.326-2.419 2.198-4.141 2.198-2.76 0-5-2.24-5-5s2.24-5 5-5c1.723 0 3.243.873 4.143 2.201l7.129-3.75zm3.728 11.549c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3zm-15-9c2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4 1.792-4 4-4zm15-7c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3z"/></svg>
                     Сохранить в PDF</a>
             </li>
-            <!--<li>
-                <a href="javascript:void(0);" class="helpBtnClick">
-                    <svg width="20" height="20" viewBox="0 0 28 26" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M16.272 5.451c-.176-.45-.272-.939-.272-1.451 0-2.208 1.792-4 4-4s4 1.792 4 4-1.792 4-4 4c-1.339 0-2.525-.659-3.251-1.67l-7.131 3.751c.246.591.382 1.239.382 1.919 0 .681-.136 1.33-.384 1.922l7.131 3.751c.726-1.013 1.913-1.673 3.253-1.673 2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4c0-.51.096-.999.27-1.447l-7.129-3.751c-.9 1.326-2.419 2.198-4.141 2.198-2.76 0-5-2.24-5-5s2.24-5 5-5c1.723 0 3.243.873 4.143 2.201l7.129-3.75zm3.728 11.549c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3zm-15-9c2.208 0 4 1.792 4 4s-1.792 4-4 4-4-1.792-4-4 1.792-4 4-4zm15-7c1.656 0 3 1.344 3 3s-1.344 3-3 3-3-1.344-3-3 1.344-3 3-3z"/></svg>
-                    Служба поддержки</a>
-            </li>-->
         </ul>
     </div>
 </div>
@@ -325,7 +317,7 @@
             <div class="input-holder">
                 <input type="text" id="email" placeholder="E-mail" required>
             </div>
-            <input type="hidden" id="sborka" value="<?php echo $link; ?>">
+            <input type="hidden" id="sborka" value="<?php echo e($link); ?>">
             <div class="input-holder">
                 <button type="submit" class="button send_config">Отправить</button>
             </div>

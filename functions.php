@@ -1,300 +1,415 @@
 <?php
+/**
+ * Подключение к базе и запросы к ней.
+ *
+ * Все запросы, принимающие внешние данные, идут через prepared statements
+ * (db_query / db_rows / db_rows_by_id). Конкатенация строк в SQL здесь
+ * больше не используется.
+ */
 
-//Устанавливаем кодировку и вывод всех ошибок
+require_once __DIR__ . '/security.php';
+
 header('Content-Type: text/html; charset=UTF-8');
-error_reporting(E_ALL);
 
-//Объектно-ориентированный стиль
-//$mysqli = new mysqli('localhost', 'victors90_config', '1Z*vIdRE', 'victors90_config');
-$mysqli = new mysqli('localhost', 'wp_user', 'uK2wi9eiEeghili9', 'configurator'); //real config
+/* ------------------------------------------------------------------ */
+/*  Соединение                                                         */
+/* ------------------------------------------------------------------ */
 
-//Устанавливаем кодировку utf8
-$mysqli->query("SET NAMES 'utf8'");
-$mysqli->set_charset("utf8");
-
-/*
- * Это "официальный" объектно-ориентированный способ сделать это
- * однако $connect_error не работал вплоть до версий PHP 5.2.9 и 5.3.0.
+/**
+ * @return mysqli
  */
-if ($mysqli->connect_error) {
-    die('Ошибка подключения (' . $mysqli->connect_errno . ') '
-            . $mysqli->connect_error);
-} else {
-    //echo 'OK';
+function db()
+{
+    static $connection = null;
+
+    if ($connection instanceof mysqli) {
+        return $connection;
+    }
+
+    // Ошибки mysqli как исключения: без этого неудачный запрос молча
+    // возвращает false и код идёт дальше с пустыми данными.
+    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+    try {
+        $connection = new mysqli(
+            (string) config_get('db.host', 'localhost'),
+            (string) config_get('db.user'),
+            (string) config_get('db.pass'),
+            (string) config_get('db.name')
+        );
+        $connection->set_charset((string) config_get('db.charset', 'utf8'));
+    } catch (Throwable $e) {
+        error_log('DB connect failed: ' . $e->getMessage());
+        http_response_code(503);
+        exit('Сервис временно недоступен');
+    }
+
+    return $connection;
 }
 
-/*
- * Если нужно быть уверенным в совместимости с версиями до 5.2.9,
- * лучше использовать такой код
+// Обратная совместимость: старый код повсюду обращается к $mysqli.
+$mysqli = db();
+
+/* ------------------------------------------------------------------ */
+/*  Хелперы запросов                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * @param  array<int,mixed> $params
+ * @return string
  */
-if (mysqli_connect_error()) {
-    die('Ошибка подключения (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
-}else{
-    //echo 'OK';
+function db_types(array $params)
+{
+    $types = '';
+
+    foreach ($params as $param) {
+        if (is_int($param)) {
+            $types .= 'i';
+        } elseif (is_float($param)) {
+            $types .= 'd';
+        } else {
+            $types .= 's';
+        }
+    }
+
+    return $types;
 }
 
-//////////////////////////////////////////
-/////////CONFIGURATOR////////////////////
-/////////////////////////////////////////
+/**
+ * Выполняет запрос с параметрами.
+ *
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @return mysqli_stmt
+ */
+function db_query($db, $sql, array $params = array())
+{
+    $stmt = $db->prepare($sql);
 
-function getRootNodesZero($mysqli){
-    $sql = "SELECT * FROM `tree` where parent_id = 1 and enabled = '1'";
-    $res = $mysqli->query($sql);
-
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
+    if ($params) {
+        $stmt->bind_param(db_types($params), ...$params);
     }
-    return $cat;
+
+    $stmt->execute();
+
+    return $stmt;
 }
 
-function getTitle($mysqli, $link){
-    $sql = "SELECT * FROM `tree` where link = '$link'";
-    $res = $mysqli->query($sql);
+/**
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @return array<int,array<string,mixed>>
+ */
+function db_rows($db, $sql, array $params = array())
+{
+    $stmt   = db_query($db, $sql, $params);
+    $result = $stmt->get_result();
+    $rows   = $result ? $result->fetch_all(MYSQLI_ASSOC) : array();
 
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+    $stmt->close();
+
+    return $rows;
 }
 
-function getRootNodesFirst($mysqli, $cat){
-    $sql = "SELECT * FROM `tree` where parent_id = (select id from tree where link = '$cat') and enabled = 1";
-    $res = $mysqli->query($sql);
+/**
+ * Тот же db_rows, но массив индексируется значением колонки $key —
+ * так исторически возвращали данные все функции ниже.
+ *
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @param  string           $key
+ * @return array<int|string,array<string,mixed>>
+ */
+function db_rows_by_id($db, $sql, array $params = array(), $key = 'id')
+{
+    $out = array();
 
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
+    foreach (db_rows($db, $sql, $params) as $row) {
+        if (array_key_exists($key, $row)) {
+            $out[$row[$key]] = $row;
+        } else {
+            $out[] = $row;
+        }
     }
-    return $cat;
+
+    return $out;
 }
 
-function getRootNodesSecond($mysqli, $id){
-    $sql = "select id, name, translit, image from `tree` where parent_id = $id and enabled = 1  ORDER BY sort";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+/**
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @return array<string,mixed>|null
+ */
+function db_row($db, $sql, array $params = array())
+{
+    $rows = db_rows($db, $sql, $params);
 
+    return $rows ? $rows[0] : null;
 }
 
-function getAllRootNodesSecond($mysqli, $id){
-    $sql = "select id, name from `tree` where parent_id = $id";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+/**
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @return int число затронутых строк
+ */
+function db_exec($db, $sql, array $params = array())
+{
+    $stmt     = db_query($db, $sql, $params);
+    $affected = $stmt->affected_rows;
+
+    $stmt->close();
+
+    return $affected;
 }
 
-function getAllChildNodes($mysqli, $cat){
-    $sql = "SELECT * FROM `tree` where group_id = '$cat' and level = '3' and enabled = '1' ORDER BY sort";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+/**
+ * @param  mysqli           $db
+ * @param  string           $sql
+ * @param  array<int,mixed> $params
+ * @return int
+ */
+function db_count($db, $sql, array $params = array())
+{
+    $row = db_row($db, $sql, $params);
+
+    return $row ? (int) reset($row) : 0;
 }
 
-function getAllProductsByTreeId($mysqli, $id){
-    $sql = "select t.id, t.name, t.price, t.description, t.image from tree i join tree_prod tp on i.id=tp.tree_id join products t on t.id=tp.prod_id WHERE tp.tree_id = '$id' ORDER BY t.price";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+/* ------------------------------------------------------------------ */
+/*  CONFIGURATOR                                                       */
+/* ------------------------------------------------------------------ */
+
+function getRootNodesZero($mysqli)
+{
+    return db_rows_by_id($mysqli, 'SELECT * FROM `tree` WHERE parent_id = 1 AND enabled = 1');
 }
 
-function getFiltersByTreeId($mysqli, $id){
-    $sql = "select f.* from tree i join tree_filter tf on i.id=tf.tree_id join filters f on f.id=tf.filter_id WHERE tf.tree_id = '$id'";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getTitle($mysqli, $link)
+{
+    return db_rows_by_id($mysqli, 'SELECT * FROM `tree` WHERE link = ?', array((string) $link));
 }
 
-//////////////////////////////////////////
-/////////CONFIGURATOR////////////////////
-/////////////////////////////////////////
-
-
-//////////////////////////////////////////
-/////////ADMIN////////////////////
-/////////////////////////////////////////
-
-function getAllProducts($mysqli){
-    $sql = "select prod.id, prod.name, prod.description, prod.price, prod.image, filter.f_name from `products` as prod JOIN filters as filter on prod.f_id = filter.id";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getRootNodesFirst($mysqli, $cat)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT child.* FROM `tree` AS child
+           JOIN `tree` AS parent ON parent.id = child.parent_id
+          WHERE parent.link = ? AND child.enabled = 1',
+        array((string) $cat)
+    );
 }
 
-function getAllConstructors($mysqli){
-    $sql = "select sborka.id, sborka.title, sborka.link, sborka.image, sborka.price, sborka.description from `sborki` as sborka";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getRootNodesSecond($mysqli, $id)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT id, name, translit, image FROM `tree` WHERE parent_id = ? AND enabled = 1 ORDER BY sort',
+        array((int) $id)
+    );
 }
 
-function getAllFilters($mysqli){
-    $sql = "select * from filters";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getAllRootNodesSecond($mysqli, $id)
+{
+    return db_rows_by_id($mysqli, 'SELECT id, name FROM `tree` WHERE parent_id = ?', array((int) $id));
 }
 
-function getAllFiltersByType($mysqli, $type){
-    $sql = "select filters.id as f_id, filters.f_name from tree_filter join filters on tree_filter.filter_id = filters.id where tree_filter.tree_id = $type";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getAllChildNodes($mysqli, $cat)
+{
+    return db_rows_by_id(
+        $mysqli,
+        "SELECT * FROM `tree` WHERE group_id = ? AND level = 3 AND enabled = 1 ORDER BY sort",
+        array((string) $cat)
+    );
 }
 
-function getNodes($mysqli, $level){
-    $sql = "select * from tree where level = '$level'";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getAllProductsByTreeId($mysqli, $id)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT p.id, p.name, p.price, p.description, p.image
+           FROM tree t
+           JOIN tree_prod tp ON t.id = tp.tree_id
+           JOIN products  p  ON p.id = tp.prod_id
+          WHERE tp.tree_id = ?
+          ORDER BY p.price',
+        array((int) $id)
+    );
 }
 
-function getTreeFilterRelations($mysqli){ 
-    $sql = "SELECT tf.id, (SELECT name from `tree` where link = t.group_id) as sborka, t.name, f.f_name, tf.tree_id, tf.filter_id FROM `tree_filter` as tf join `tree` as t on tf.tree_id = t.id join `filters` as f on tf.filter_id = f.id";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+function getFiltersByTreeId($mysqli, $id)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT f.* FROM tree t
+           JOIN tree_filter tf ON t.id = tf.tree_id
+           JOIN filters     f  ON f.id = tf.filter_id
+          WHERE tf.tree_id = ?',
+        array((int) $id)
+    );
 }
 
-function getTreeProdRelations($mysqli){ 
-    $sql = "SELECT tp.id, (SELECT name from `tree` where link = t.group_id) as sborka, t.name, p.name as product, tp.tree_id, tp.prod_id FROM `tree_prod` as tp join `tree` as t on tp.tree_id = t.id join `products` as p on tp.prod_id = p.id";
-    $res = $mysqli->query($sql);
-    //Создаем масив где ключ массива является ID меню
-    $cat = array();
-    while($row = $res->fetch_assoc()){
-        $cat[$row['id']] = $row;
-    }
-    return $cat;
+/* ------------------------------------------------------------------ */
+/*  ADMIN                                                              */
+/* ------------------------------------------------------------------ */
+
+function getAllProducts($mysqli)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT prod.id, prod.name, prod.description, prod.price, prod.image, filter.f_name
+           FROM `products` AS prod
+           JOIN filters AS filter ON prod.f_id = filter.id'
+    );
+}
+
+function getAllConstructors($mysqli)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT id, title, link, image, price, description FROM `sborki`'
+    );
+}
+
+function getAllFilters($mysqli)
+{
+    return db_rows_by_id($mysqli, 'SELECT * FROM filters');
+}
+
+function getAllFiltersByType($mysqli, $type)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT filters.id AS f_id, filters.f_name
+           FROM tree_filter
+           JOIN filters ON tree_filter.filter_id = filters.id
+          WHERE tree_filter.tree_id = ?',
+        array((int) $type),
+        'f_id'
+    );
+}
+
+function getNodes($mysqli, $level)
+{
+    return db_rows_by_id($mysqli, 'SELECT * FROM tree WHERE level = ?', array((int) $level));
+}
+
+function getTreeFilterRelations($mysqli)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT tf.id,
+                (SELECT name FROM `tree` WHERE link = t.group_id LIMIT 1) AS sborka,
+                t.name, f.f_name, tf.tree_id, tf.filter_id
+           FROM `tree_filter` AS tf
+           JOIN `tree`    AS t ON tf.tree_id = t.id
+           JOIN `filters` AS f ON tf.filter_id = f.id'
+    );
+}
+
+function getTreeProdRelations($mysqli)
+{
+    return db_rows_by_id(
+        $mysqli,
+        'SELECT tp.id,
+                (SELECT name FROM `tree` WHERE link = t.group_id LIMIT 1) AS sborka,
+                t.name, p.name AS product, tp.tree_id, tp.prod_id
+           FROM `tree_prod` AS tp
+           JOIN `tree`     AS t ON tp.tree_id = t.id
+           JOIN `products` AS p ON tp.prod_id = p.id'
+    );
 }
 
 function CountProducts($mysqli)
 {
-    $row = 0;
-  $res = $mysqli->query("select * from products");  
-  if ($res) 
-    { 
-        $row = mysqli_num_rows($res); 
-    }
-    return $row;
+    return db_count($mysqli, 'SELECT COUNT(*) FROM products');
 }
 
 function CountFilters($mysqli)
 {
-  $row = 0;
-  $res = $mysqli->query("select * from filters");  
-  if ($res) 
-    { 
-        $row = mysqli_num_rows($res); 
-    }
-    return $row;
+    return db_count($mysqli, 'SELECT COUNT(*) FROM filters');
 }
 
 function CountSborka($mysqli)
 {
-  $row = 0;
-  $res = $mysqli->query("select * from tree where level = '0'");  
-  if ($res) 
-    { 
-        $row = mysqli_num_rows($res); 
-    }
-    return $row;
+    return db_count($mysqli, 'SELECT COUNT(*) FROM tree WHERE level = 0');
 }
 
-function CheckLoginPass($mysqli, $login, $pass)
+/* ------------------------------------------------------------------ */
+/*  Аутентификация                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Проверяет логин и пароль.
+ *
+ * Принимает пароль В ОТКРЫТОМ ВИДЕ (раньше вызывающий код передавал
+ * sha1(md5($pass))). Поддерживает старый формат хеша ради существующих
+ * учёток и при первом успешном входе молча перезаписывает его на bcrypt.
+ *
+ * @param  mysqli $mysqli
+ * @param  string $login
+ * @param  string $plainPassword
+ * @return bool
+ */
+function CheckLoginPass($mysqli, $login, $plainPassword)
 {
-  $sql = "SELECT id FROM users WHERE username = '$login' and password = '$pass'";
-  $result = $mysqli->query($sql);
-  $count = mysqli_num_rows($result);
-  $row = mysqli_fetch_array($result,MYSQLI_ASSOC);
-  $id = $row['id'];
-  $date = date("d.m.Y/h:m:sa", strtotime('+2 hours'));
-  if($count > 0){
-      $mysqli->query("UPDATE users set last_login = '$date' WHERE id = '$id'");
-      return true;
-  }else{
-      return false;
-  }
-}
+    $user = db_row(
+        $mysqli,
+        'SELECT id, password FROM users WHERE username = ? LIMIT 1',
+        array((string) $login)
+    );
 
-function LastLoginsUpdate($mysqli, $login, $pass)
-{
-  $sql = "SELECT id FROM users WHERE username = '$login' and password = '$pass'";
-  $result = $mysqli->query($sql);
-  $count = mysqli_num_rows($result);
-  if($count > 0){
-      $mysqli->query("");
-      return true;
-  }else{
-      return false;
-  }
-}
-
-function getAllUsers($mysqli){
-    $sql = "SELECT * FROM `users`";
-    $res = $mysqli->query($sql);
-
-    //Создаем масив где ключ массива является ID меню
-    $users = array();
-    while($row = $res->fetch_assoc()){
-        $users[$row['id']] = $row;
+    if (!$user) {
+        // Считаем «пустой» хеш, чтобы время ответа не выдавало
+        // существование пользователя.
+        password_verify($plainPassword, '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG');
+        return false;
     }
-    return $users;
+
+    $stored = (string) $user['password'];
+    $legacy = sha1(md5($plainPassword));
+
+    if (password_verify($plainPassword, $stored)) {
+        $ok = true;
+    } elseif (hash_equals($stored, $legacy)) {
+        $ok = true;
+        // Переводим на нормальный хеш прямо при входе.
+        db_exec(
+            $mysqli,
+            'UPDATE users SET password = ? WHERE id = ?',
+            array(password_hash($plainPassword, PASSWORD_DEFAULT), (int) $user['id'])
+        );
+    } else {
+        $ok = false;
+    }
+
+    if (!$ok) {
+        return false;
+    }
+
+    db_exec(
+        $mysqli,
+        'UPDATE users SET last_login = ? WHERE id = ?',
+        array(date('d.m.Y H:i:s'), (int) $user['id'])
+    );
+
+    return true;
 }
 
-function exit_cab(){
-    unset($_SESSION['username']);
+function getAllUsers($mysqli)
+{
+    return db_rows_by_id($mysqli, 'SELECT id, username, last_login FROM `users`');
 }
-//select t.name from tree i join tree_prod tp on i.id=tp.tree_id join products t on t.id=tp.prod_id WHERE tp.tree_id = 4
 
-
-    
-    
+function exit_cab()
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $_SESSION = array();
+        session_destroy();
+    }
+}

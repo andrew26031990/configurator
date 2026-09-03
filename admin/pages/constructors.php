@@ -21,28 +21,28 @@
                 <?php $sborki = getAllConstructors($mysqli);foreach ($sborki as $item){ ?>
                     <tr>
                         <td>
-                            <?php echo $item['id']; ?>
+                            <?php echo e($item['id']); ?>
                         </td>
                         <td>
-                            <?=$item['title']; ?>
+                            <?= e_html($item['title']); ?>
                         </td>
                         <td>
-                            <a href="<?=$item['link']; ?>" target="_blank">Ссылка</a>
+                            <a href="<?= e_url($item['link']); ?>" target="_blank" rel="noopener">Ссылка</a>
                         </td>
                         <td>
-                            <?=$item['price']; ?>
+                            <?= e($item['price']); ?>
                         </td>
                         <td>
-                            <?=$item['description']; ?>
+                            <?= e_html($item['description']); ?>
                         </td>
                         <td>
-                            <img src="/configurator/images/sborki/<?=$item['image']; ?>" style="height: 85px;" /><?/*=$item['image']; */?>
+                            <img src="/configurator/images/sborki/<?= e($item['image']); ?>" style="height: 85px;" />
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>:<?php echo $item['image']; ?>" type="button" class="btn btn-danger delete_sborka">Delete</button>
+                            <button dataId="<?php echo e($item['id']); ?>:<?php echo e($item['image']); ?>" type="button" class="btn btn-danger delete_sborka">Delete</button>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Edit</button>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Edit</button>
                         </td>
                     </tr>
                 <?php } ?>

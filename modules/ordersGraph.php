@@ -1,19 +1,8 @@
 <?php
-header('Content-Type: application/json');
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-include '../functions.php';
-
-$sqlQuery = "SELECT COUNT(id) as quantity, date FROM `orders` where date in (select date from orders) GROUP by date";
-
-$result = mysqli_query($mysqli, $sqlQuery);
-
-
-$data = array();
-foreach ($result as $row) {
-	$data[] = $row;
-}
-
-mysqli_close($conn);
-
-echo json_encode($data);
-?>
+json_out(db_rows(
+    $mysqli,
+    'SELECT COUNT(id) AS quantity, date FROM `orders` GROUP BY date ORDER BY date'
+));

@@ -1,8 +1,8 @@
 <?php
 //ini_set('display_errors', 1); ini_set('display_startup_errors', 1); error_reporting(E_ALL);
-include 'functions.php';
-include 'modules/online.php';
-$ini = parse_ini_file('settings.ini');
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/modules/online.php';
+$ini = parse_ini_file(__DIR__ . '/settings.ini');
 setlocale(LC_MONETARY, 'uz_UZ');
 header('Access-Control-Allow-Origin: *');
 ?>
@@ -37,19 +37,19 @@ header('Access-Control-Allow-Origin: *');
                     <div class="widget_text widget widget_custom_html" id="custom_html-2">
                         <div class="textwidget custom-html-widget">
                             <p><img src="/configurator/images/mail.svg" alt="" />Напишите нам</p>
-                            <strong><a href="mailto://<?php echo $ini['email']?>" style="color: white"><?php echo $ini['email']?></a></strong>
+                            <strong><a href="mailto://<?php echo e($ini['email']); ?>" style="color: white"><?php echo e($ini['email']); ?></a></strong>
                         </div>
                     </div>
                     <div class="widget_text widget widget_custom_html" id="custom_html-3">
                         <div class="textwidget custom-html-widget">
                             <p><img src="/configurator/images/phone.svg" alt="" />Позвоните нам</p>
-                            <strong><a href="tel://<?php echo $ini['phone']?>" style="color: white"><?php echo $ini['phone']?></a></strong>
+                            <strong><a href="tel://<?php echo e($ini['phone']); ?>" style="color: white"><?php echo e($ini['phone']); ?></a></strong>
                         </div>
                     </div>
                     <div class="widget_text widget widget_custom_html" id="custom_html-4">
                         <div class="textwidget custom-html-widget">
                             <p><img src="/configurator/images/time.svg" alt="" />Рабочее время</p>
-                            <strong><?php echo $ini['work_time']?></strong>
+                            <strong><?php echo e($ini['work_time']); ?></strong>
                         </div>
                     </div>
                 </div>
@@ -69,16 +69,16 @@ header('Access-Control-Allow-Origin: *');
     <?php
         if(isset($_GET["cat"])){ $cat = $_GET["cat"];
             if ($_GET["cat"] == 'kompyutery'){
-                include($_SERVER['DOCUMENT_ROOT'].'/configurator/ready_configuration.php');
+                include __DIR__ . '/configurator/ready_configuration.php';
             }else{
-                include($_SERVER['DOCUMENT_ROOT'].'/configurator/configuration.php');
+                include __DIR__ . '/configurator/configuration.php';
             }
         }else {
-            include($_SERVER['DOCUMENT_ROOT'].'/configurator/categories.php');
+            include __DIR__ . '/configurator/categories.php';
         }
     ?>
 </section>
-<?php include($_SERVER['DOCUMENT_ROOT'].'/configurator/scripts.php'); ?>
+<?php include __DIR__ . '/configurator/scripts.php'; ?>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};

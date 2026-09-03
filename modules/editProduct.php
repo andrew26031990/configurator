@@ -1,72 +1,80 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-$valid_extensions = array('jpeg', 'jpg', 'png', 'gif', 'bmp'); // valid extensions
-$path = '../images/products/'; // upload directory
+// В старом коде здесь было '../images/products/' без configurator/,
+// из-за чего замена картинки товара молча не работала.
+$uploadDir = APP_ROOT . '/configurator/images/products';
 
-if (!file_exists($_FILES['picture']['tmp_name']) || !is_uploaded_file($_FILES['picture']['tmp_name'])) 
-{
-    if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['filter'] != ''){
-        include_once '../functions.php';
-        try{
-            $id = $_POST['idTovara'];
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $description = $_POST['description'];
-            $filter = $_POST['filter'];
-            $insert = $mysqli->query("UPDATE products SET name = '$name', description = '$description', price = '$price', f_id = '$filter' WHERE id = '$id'");
-            echo 'Данные товара были успешно изменены';
-        }catch(Exception $ex){
-            echo $e->getMessage();
-        }
-    }else{
-        echo 'Не все поля заполнены';
+$id          = post_int('idTovara');
+$name        = post_str('name', 200);
+$description = post_str('description', 65535);
+$price       = (int) preg_replace('/[^0-9]/', '', post_str('price', 30));
+$filterId    = post_int('filter');
+
+if ($id === null || $id <= 0 || $name === '' || $description === '' || $price <= 0 || $filterId === null) {
+    http_response_code(400);
+    exit('Не все поля заполнены');
+}
+
+$hasNewImage = isset($_FILES['picture']) && $_FILES['picture']['error'] === UPLOAD_ERR_OK;
+
+if (!$hasNewImage) {
+    try {
+        db_exec(
+            $mysqli,
+            'UPDATE products SET name = ?, description = ?, price = ?, f_id = ? WHERE id = ?',
+            array($name, $description, $price, $filterId, $id)
+        );
+        echo 'Данные товара были успешно изменены';
+    } catch (Throwable $e) {
+        error_log('editProduct: ' . $e->getMessage());
+        http_response_code(500);
+        echo 'Ошибка при сохранении товара';
     }
-}else{
-    if($_POST['name'] !='' && $_POST['price'] != '' && $_POST['description'] != '' && $_POST['filter'] != '')
-    {
-        $img = $_FILES['picture']['name'];
-        $tmp = $_FILES['picture']['tmp_name'];
-        // get uploaded file's extension
-        $ext = strtolower(pathinfo($img, PATHINFO_EXTENSION));
-        // can upload same image using rand function
-        $final_image = rand(1000,1000000).$img;
-        // check's valid format
-        if(in_array($ext, $valid_extensions)) 
-        { 
-            $path = $path.strtolower($final_image); 
-            if(move_uploaded_file($tmp,$path)) 
-            {
-                //echo "<img src='$path' />";
-                $id = $_POST['idTovara'];
-                $oldImg = $_POST['oldImg'];
-                $name = $_POST['name'];
-                $price = $_POST['price'];
-                $description = $_POST['description'];
-                $filter = $_POST['filter'];
-                $final_image = strtolower($final_image);
-                //include database configuration file
-                include_once '../functions.php';
-                //insert form data in the database
-                try{
-                    $insert = $mysqli->query("UPDATE products SET name = '$name', description = '$description', price = '$price', image = '$final_image', f_id = '$filter' WHERE id = '$id'");
-                    $mask = "../".$oldImg;
-                    if (file_exists($mask)) {unlink($mask);}
-                    //$insert = $mysqli->query("INSERT INTO products (name, description, price, image, f_id) VALUES ('".$name."','".$description."','".$price."','".$final_image."','".$filter."')");
-                    echo 'Товар был успешно отредактирован';
-                }catch(Exception $ex){
-                    echo $e->getMessage();
-                }
+    return;
+}
 
-                //echo $insert?'ok':'err';
-            }
-        } 
-        else 
-        {
-            echo 'Неверное расширение картинки'.$_POST['name'].'/'.$_POST['price'].'/'.$_POST['filter'].'/'.$_POST['description'];
-        }
-    }else{
-            echo 'Не все поля заполнены';
+$extension = strtolower((string) pathinfo((string) $_FILES['picture']['name'], PATHINFO_EXTENSION));
+
+if (!is_valid_image_upload($_FILES['picture']['tmp_name'], $extension)) {
+    http_response_code(400);
+    exit('Неверный формат картинки');
+}
+
+$fileName = random_image_name($extension);
+$fullPath = $uploadDir . '/' . $fileName;
+
+if (!move_uploaded_file($_FILES['picture']['tmp_name'], $fullPath)) {
+    http_response_code(500);
+    exit('Не удалось сохранить картинку');
+}
+
+if (!harden_uploaded_image($fullPath, $extension)) {
+    delete_upload($uploadDir, $fileName);
+    http_response_code(400);
+    exit('Не удалось обработать картинку');
+}
+
+try {
+    // Старое имя берём из базы, а не из формы: значение из POST раньше
+    // подставлялось прямо в unlink('../' . $oldImg).
+    $current = db_row($mysqli, 'SELECT image FROM products WHERE id = ?', array($id));
+
+    db_exec(
+        $mysqli,
+        'UPDATE products SET name = ?, description = ?, price = ?, image = ?, f_id = ? WHERE id = ?',
+        array($name, $description, $price, $fileName, $filterId, $id)
+    );
+
+    if ($current && $current['image'] !== '') {
+        delete_upload($uploadDir, $current['image']);
     }
-}    
 
-
+    echo 'Товар был успешно отредактирован';
+} catch (Throwable $e) {
+    delete_upload($uploadDir, $fileName);
+    error_log('editProduct: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при сохранении товара';
+}

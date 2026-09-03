@@ -1,77 +1,78 @@
 <?php
+require_once __DIR__ . '/../functions.php';
+require_admin();
 
-$valid_extensions = array('jpeg', 'jpg', 'png', 'gif', 'bmp'); // valid extensions
-$path = '../configurator/images/sborki/'; // upload directory
+$uploadDir = APP_ROOT . '/configurator/images/sborki';
 
-if (!file_exists($_FILES['edit_image']['tmp_name']) || !is_uploaded_file($_FILES['edit_image']['tmp_name']))
-{
-    if($_POST['edit_link'] !='' && $_POST['edit_price'] != '' && $_POST['edit_description'] != '' && $_POST['edit_title'] != ''){
-        include_once '../functions.php';
-        try{
-            $id = $_POST['idSborki'];
-            $title = $_POST['edit_title'];
-            $price = $_POST['edit_price'];
-            $description = $_POST['edit_description'];
-            $link = $_POST['edit_link'];
-            $category = strtoupper($_POST['edit_category']);
+$id          = post_int('idSborki');
+$title       = post_str('edit_title', 300);
+$description = post_str('edit_description', 65535);
+$price       = (float) str_replace(array(' ', ','), array('', '.'), post_str('edit_price', 30));
+$link        = post_str('edit_link', 65535);
+$category    = strtoupper(post_str('edit_category', 200));
 
-            $insert = $mysqli->query("UPDATE sborki SET title = '$title', description = '$description', price = '$price', link = '$link', category = '$category' WHERE id = '$id'");
-            echo 'Данные сборки были успешно изменены';
-        }catch(Exception $ex){
-            echo $e->getMessage();
-        }
-    }else{
-        echo 'Не все поля заполнены';
-    }
-}else{
-    if($_POST['edit_link'] !='' && $_POST['edit_price'] != '' && $_POST['edit_description'] != '' && $_POST['edit_title'] != '')
-    {
-        $img = $_FILES['edit_image']['name'];
-        $tmp = $_FILES['edit_image']['tmp_name'];
-        // get uploaded file's extension
-        $ext = strtolower(pathinfo($img, PATHINFO_EXTENSION));
-        // can upload same image using rand function
-        $final_image = rand(1000,1000000).$img;
-        // check's valid format
-        if(in_array($ext, $valid_extensions))
-        {
-            $path = $path.strtolower($final_image);
-            if(move_uploaded_file($tmp,$path))
-            {
-                //echo "<img src='$path' />";
-                $id = $_POST['idSborki'];
-                $oldImg = $_POST['oldImg'];
-                $title = $_POST['edit_title'];
-                $price = $_POST['edit_price'];
-                $description = $_POST['edit_description'];
-                $link = $_POST['edit_link'];
-                $category = strtoupper($_POST['edit_category']);
-                $final_image = strtolower($final_image);
-                //include database configuration file
-                include_once '../functions.php';
-                //insert form data in the database
-                try{
-                    $insert = $mysqli->query("UPDATE sborki SET title = '$title', description = '$description', price = '$price', image = '$final_image', link = '$link', category = '$category' WHERE id = '$id'");
-                    $mask = "..".$oldImg;
-                    if (file_exists($mask)) {unlink($mask);}
-                    //$insert = $mysqli->query("INSERT INTO products (name, description, price, image, f_id) VALUES ('".$name."','".$description."','".$price."','".$final_image."','".$filter."')");
-                    echo 'Сборка была успешно отредактирована';
-                }catch(Exception $ex){
-                    echo $e->getMessage();
-                }
-
-                //echo $insert?'ok':'err';
-            }else{
-                echo 'Не удалось загрузить файл';
-            }
-        }
-        else
-        {
-            echo 'Неверное расширение картинки';
-        }
-    }else{
-        echo 'Не все поля заполнены';
-    }
+if ($id === null || $id <= 0 || $title === '' || $description === '' || $price <= 0 || $link === '') {
+    http_response_code(400);
+    exit('Не все поля заполнены');
 }
 
+$hasNewImage = isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK;
 
+if (!$hasNewImage) {
+    try {
+        db_exec(
+            $mysqli,
+            'UPDATE sborki SET title = ?, description = ?, price = ?, link = ?, category = ? WHERE id = ?',
+            array($title, $description, $price, $link, $category, $id)
+        );
+        echo 'Данные сборки были успешно изменены';
+    } catch (Throwable $e) {
+        error_log('editSborka: ' . $e->getMessage());
+        http_response_code(500);
+        echo 'Ошибка при сохранении сборки';
+    }
+    return;
+}
+
+$extension = strtolower((string) pathinfo((string) $_FILES['edit_image']['name'], PATHINFO_EXTENSION));
+
+if (!is_valid_image_upload($_FILES['edit_image']['tmp_name'], $extension)) {
+    http_response_code(400);
+    exit('Неверный формат картинки');
+}
+
+$fileName = random_image_name($extension);
+
+if (!move_uploaded_file($_FILES['edit_image']['tmp_name'], $uploadDir . '/' . $fileName)) {
+    http_response_code(500);
+    exit('Не удалось сохранить картинку');
+}
+
+if (!harden_uploaded_image($uploadDir . '/' . $fileName, $extension)) {
+    delete_upload($uploadDir, $fileName);
+    http_response_code(400);
+    exit('Не удалось обработать картинку');
+}
+
+try {
+    // Старое имя картинки берём из базы: поле oldImg из формы попадало
+    // напрямую в unlink('..' . $oldImg) и позволяло удалить любой файл.
+    $current = db_row($mysqli, 'SELECT image FROM sborki WHERE id = ?', array($id));
+
+    db_exec(
+        $mysqli,
+        'UPDATE sborki SET title = ?, description = ?, price = ?, image = ?, link = ?, category = ? WHERE id = ?',
+        array($title, $description, $price, $fileName, $link, $category, $id)
+    );
+
+    if ($current && $current['image'] !== '') {
+        delete_upload($uploadDir, $current['image']);
+    }
+
+    echo 'Сборка была успешно отредактирована';
+} catch (Throwable $e) {
+    delete_upload($uploadDir, $fileName);
+    error_log('editSborka: ' . $e->getMessage());
+    http_response_code(500);
+    echo 'Ошибка при сохранении сборки';
+}

@@ -1,33 +1,32 @@
 <?php
+/**
+ * Подгрузка списка комплектующих при клике по фильтру в конфигураторе.
+ * Публичный эндпоинт.
+ */
 
-include '../functions.php';
+require_once __DIR__ . '/../functions.php';
 
-$filter_f = $_POST['filter'];
-$component_f =  $_POST['component'];
-$filter_id = $_POST['filterId'];
-$data_id = $_POST['dataId'];
-//echo $filter_f.$component_f;
-if($filter_id == '0000'){
-    $sql = "SELECT prod.id, prod.name, prod.price, prod.image, prod.description FROM `products` as prod JOIN `tree_prod` as tp on tp.prod_id = prod.id JOIN `tree` as tr on tr.id = tp.tree_id where tp.tree_id = $data_id ORDER BY prod.price";
-}else{
-    $sql = "select id, name, price, image, description from products where f_id = '$filter_id'";
-    $sql = "SELECT prod.id, prod.name, prod.price, prod.image, prod.description FROM `products` as prod JOIN `tree_prod` as tp on tp.prod_id = prod.id JOIN `tree` as tr on tr.id = tp.tree_id where tp.tree_id = '$data_id' and prod.f_id = '$filter_id' ORDER BY prod.price";
+$treeId   = post_int('dataId');
+$filterId = post_str('filterId', 10);
+
+if ($treeId === null || $treeId <= 0) {
+    json_out(array());
+    return;
 }
 
-$arr = $mysqli->query($sql);
+$sql = 'SELECT prod.id, prod.name, prod.price, prod.image, prod.description
+          FROM `products` AS prod
+          JOIN `tree_prod` AS tp ON tp.prod_id = prod.id
+         WHERE tp.tree_id = ?';
 
-$res = array();
+$params = array($treeId);
 
-while($row = $arr->fetch_assoc()){
-    $id = $row['id'];
-    $name = $row['name'];
-    $price = $row['price'];
-    $image = $row['image'];
-    $description = $row['description'];
-    $res[] = array("id" => $id,
-                    "name" => $name,
-                        "price" => $price,
-                            "image" => $image,
-                                "description" => $description);
+// '0000' — псевдофильтр «Все».
+if ($filterId !== '' && $filterId !== '0000') {
+    $sql .= ' AND prod.f_id = ?';
+    $params[] = (int) $filterId;
 }
-echo json_encode($res);
+
+$sql .= ' ORDER BY prod.price';
+
+json_out(db_rows($mysqli, $sql, $params));

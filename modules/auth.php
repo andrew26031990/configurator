@@ -9,46 +9,52 @@ header('Content-Type: text/plain; charset=UTF-8');
 
 secure_session_start();
 
-/* --- Простой брутфорс-лимит: 5 попыток, затем пауза 5 минут ---------- */
+/* --- Лимит попыток по IP --------------------------------------------- */
 
-$attempts = isset($_SESSION['login_attempts']) ? (int) $_SESSION['login_attempts'] : 0;
-$blocked  = isset($_SESSION['login_blocked_until']) ? (int) $_SESSION['login_blocked_until'] : 0;
+$blockedFor = login_blocked_seconds();
 
-if ($blocked > time()) {
+if ($blockedFor > 0) {
     http_response_code(429);
-    exit('Слишком много попыток входа. Попробуйте позже.');
+    exit('Слишком много попыток входа. Повторите через ' . ceil($blockedFor / 60) . ' мин.');
 }
 
 /* --- reCAPTCHA -------------------------------------------------------- */
 
-$captcha = post_str('g-recaptcha-response', 2000);
+/*
+ * Капчу можно выключить в config.local.php (recaptcha.enabled = false).
+ * Тогда единственной защитой формы остаётся лимит попыток выше,
+ * поэтому режим задуман как временный.
+ */
+if (recaptcha_enabled()) {
+    $captcha = post_str('g-recaptcha-response', 2000);
 
-if ($captcha === '') {
-    exit('incorrectCaptcha');
-}
+    if ($captcha === '') {
+        exit('incorrectCaptcha');
+    }
 
-$verify = @file_get_contents(
-    'https://www.google.com/recaptcha/api/siteverify',
-    false,
-    stream_context_create(array(
-        'http' => array(
-            'method'        => 'POST',
-            'header'        => "Content-Type: application/x-www-form-urlencoded\r\n",
-            'content'       => http_build_query(array(
-                'secret'   => (string) config_get('recaptcha.secret'),
-                'response' => $captcha,
-                'remoteip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
-            )),
-            'timeout'       => 5,
-            'ignore_errors' => true,
-        ),
-    ))
-);
+    $verify = @file_get_contents(
+        'https://www.google.com/recaptcha/api/siteverify',
+        false,
+        stream_context_create(array(
+            'http' => array(
+                'method'        => 'POST',
+                'header'        => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'content'       => http_build_query(array(
+                    'secret'   => (string) config_get('recaptcha.secret'),
+                    'response' => $captcha,
+                    'remoteip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
+                )),
+                'timeout'       => 5,
+                'ignore_errors' => true,
+            ),
+        ))
+    );
 
-$captchaData = $verify === false ? null : json_decode($verify, true);
+    $captchaData = $verify === false ? null : json_decode($verify, true);
 
-if (!is_array($captchaData) || empty($captchaData['success'])) {
-    exit('incorrectCaptcha');
+    if (!is_array($captchaData) || empty($captchaData['success'])) {
+        exit('incorrectCaptcha');
+    }
 }
 
 /* --- Проверка логина и пароля ----------------------------------------- */
@@ -61,20 +67,14 @@ if ($login === '' || $password === '') {
 }
 
 if (!CheckLoginPass($mysqli, $login, $password)) {
-    $_SESSION['login_attempts'] = $attempts + 1;
-
-    if ($_SESSION['login_attempts'] >= 5) {
-        $_SESSION['login_blocked_until'] = time() + 300;
-        $_SESSION['login_attempts']      = 0;
-    }
-
+    login_register_failure();
     exit('False');
 }
 
 // Смена идентификатора сессии после входа — защита от session fixation.
 session_regenerate_id(true);
 
-unset($_SESSION['login_attempts'], $_SESSION['login_blocked_until']);
+login_reset_failures();
 
 $_SESSION['username'] = $login;
 

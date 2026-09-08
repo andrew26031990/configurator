@@ -1,11 +1,12 @@
 <?php
 /**
- * Приём заявки из конфигуратора: отправка в Telegram-канал.
+ * Приём заявки из конфигуратора: Telegram-канал и письмо на почту.
  * Публичный эндпоинт, авторизация не требуется.
  */
 
 require_once __DIR__ . '/../security.php';
 require_once __DIR__ . '/messages_to_telegram.php';
+require_once __DIR__ . '/../mail/mailer.php';
 
 header('Content-Type: text/plain; charset=UTF-8');
 
@@ -47,5 +48,20 @@ $message = 'Имя клиента: ' . $name . PHP_EOL
     . $config . PHP_EOL;
 
 SendMailToBot($message);
+
+/*
+ * Письмо — дополнительный канал к Telegram. Если SMTP недоступен,
+ * SendOrderMail() пишет в лог и возвращает false: заявка уже принята,
+ * и клиент не должен видеть ошибку почты.
+ */
+SendOrderMail(array(
+    'name'       => $name,
+    'email'      => $email,
+    'phone'      => $phone,
+    'sborka'     => $sborka,
+    'config'     => $config,
+    'amount'     => $amount,
+    'sborkaLink' => $sborkaLink,
+));
 
 echo 'Ваша заявка принята. В ближайшее время с вами свяжутся сотрудники компании PCMARKET';

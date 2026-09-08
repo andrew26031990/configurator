@@ -31,11 +31,17 @@ function db()
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
     try {
+        // db.port задаётся только там, где база не на штатном 3306
+        // (например, локальная MariaDB на 3307). На проде ключа нет —
+        // передаём null, и mysqli берёт порт по умолчанию.
+        $port = config_get('db.port');
+
         $connection = new mysqli(
             (string) config_get('db.host', 'localhost'),
             (string) config_get('db.user'),
             (string) config_get('db.pass'),
-            (string) config_get('db.name')
+            (string) config_get('db.name'),
+            $port === null ? null : (int) $port
         );
         $connection->set_charset((string) config_get('db.charset', 'utf8'));
     } catch (Throwable $e) {

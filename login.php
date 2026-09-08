@@ -58,7 +58,9 @@ if (is_admin()) {
                       <input type="password" class="form-control form-control-user" id="exampleInputPassword" name="password" placeholder="Password">
                     </div>
                     <div class="checkbox mb-3" style="text-align: center;">
-                        <div class="g-recaptcha" data-sitekey="<?= e(config_get('recaptcha.sitekey')); ?>">
+                        <?php if (recaptcha_enabled()) { ?>
+                        <div class="g-recaptcha" data-sitekey="<?= e(config_get('recaptcha.sitekey')); ?>"></div>
+                        <?php } ?>
                       </div>
                     <button href="index.html" class="btn btn-primary btn-user btn-block" type="submit" name="enter" style="margin-top:15px;">
                       Login
@@ -97,7 +99,9 @@ if (is_admin()) {
                        });
                       });
                   </script> 
-                  <script src='https://www.google.com/recaptcha/api.js' async defer></script>
+                  <?php if (recaptcha_enabled()) { ?>
+                  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                  <?php } ?>
                 </div>
               </div>
             </div>

@@ -594,6 +594,144 @@ function delete_upload($directory, $fileName)
  * @param  int    $seconds
  * @return bool   true — можно продолжать
  */
+/* ------------------------------------------------------------------ */
+/*  Ограничение попыток входа                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Включена ли проверка reCAPTCHA.
+ *
+ * @return bool
+ */
+function recaptcha_enabled()
+{
+    return (bool) config_get('recaptcha.enabled', true);
+}
+
+/**
+ * Каталог для служебных файлов. Закрыт от веба своим .htaccess.
+ *
+ * @param  string $name
+ * @return string
+ */
+function storage_path($name = '')
+{
+    $dir = APP_ROOT . '/storage';
+
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+
+    return $name === '' ? $dir : $dir . '/' . $name;
+}
+
+/**
+ * @return array<string,array{count:int,last:int}>
+ */
+function login_attempts_read()
+{
+    $file = storage_path('login_attempts.json');
+
+    if (!is_readable($file)) {
+        return array();
+    }
+
+    $data = json_decode((string) file_get_contents($file), true);
+
+    return is_array($data) ? $data : array();
+}
+
+/**
+ * @param  array<string,array{count:int,last:int}> $data
+ * @return void
+ */
+function login_attempts_write(array $data)
+{
+    @file_put_contents(storage_path('login_attempts.json'), json_encode($data), LOCK_EX);
+}
+
+/**
+ * @return string ключ текущего клиента (сам IP не храним)
+ */
+function login_client_key()
+{
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+
+    return hash('sha256', $ip);
+}
+
+/**
+ * Сколько секунд осталось до конца блокировки; 0 — можно пробовать.
+ *
+ * Счётчик привязан к IP, а не к сессии: сессионный обходится тем, что
+ * клиент просто не присылает cookie, и счётчик каждый раз начинается
+ * с нуля. Хранится в файле, потому что структуру базы мы пока не трогаем.
+ *
+ * @return int
+ */
+function login_blocked_seconds()
+{
+    $max   = (int) config_get('login.max_attempts', 5);
+    $block = (int) config_get('login.block_seconds', 900);
+    $row   = login_attempts_read();
+    $key   = login_client_key();
+
+    if (!isset($row[$key]) || (int) $row[$key]['count'] < $max) {
+        return 0;
+    }
+
+    $left = ((int) $row[$key]['last'] + $block) - time();
+
+    return $left > 0 ? $left : 0;
+}
+
+/**
+ * Фиксирует неудачную попытку входа.
+ *
+ * @return void
+ */
+function login_register_failure()
+{
+    $block = (int) config_get('login.block_seconds', 900);
+    $data  = login_attempts_read();
+    $key   = login_client_key();
+    $now   = time();
+
+    // Попутно выкидываем протухшие записи, чтобы файл не рос.
+    foreach ($data as $k => $entry) {
+        if (((int) $entry['last'] + $block * 2) < $now) {
+            unset($data[$k]);
+        }
+    }
+
+    $count = isset($data[$key]['count']) ? (int) $data[$key]['count'] : 0;
+
+    // Блокировка отбыта — счётчик начинается заново.
+    if (isset($data[$key]['last']) && ((int) $data[$key]['last'] + $block) < $now) {
+        $count = 0;
+    }
+
+    $data[$key] = array('count' => $count + 1, 'last' => $now);
+
+    login_attempts_write($data);
+}
+
+/**
+ * Сбрасывает счётчик после успешного входа.
+ *
+ * @return void
+ */
+function login_reset_failures()
+{
+    $data = login_attempts_read();
+    $key  = login_client_key();
+
+    if (isset($data[$key])) {
+        unset($data[$key]);
+        login_attempts_write($data);
+    }
+}
+
 function throttle_ok($bucket, $seconds = 20)
 {
     secure_session_start();

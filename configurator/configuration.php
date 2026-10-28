@@ -1,4 +1,29 @@
 
+<style>
+    /* Кнопка "Убрать из сборки" (десктоп — в строке заголовка) */
+    .uncheck-btn {
+        display: inline-block;
+        width: auto;
+        margin: 0 0 0 16px;
+        padding: 4px 18px;
+        border: 2px solid #e01b22;
+        color: #1A191F;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    /* Резерв места справа под абсолютную цену, чтобы длинное название не налезало (широкие экраны) */
+    .main-list .product-block { padding-right: 180px; }
+
+    @media (max-width: 992px) {
+        /* строка товара в ряд: название слева, цена справа — без наложения и без отрыва цены */
+        .main-list li { display: flex; align-items: center; justify-content: space-between; }
+        .main-list .product-block { width: auto; -webkit-box-flex: 1; -ms-flex: 1 1 auto; flex: 1 1 auto; padding-right: 0; }
+        .price-block { position: static; float: none; margin: 0 0 0 10px; white-space: nowrap; }
+        /* кнопка "Убрать из сборки" — на отдельной строке под заголовком */
+        .uncheck-btn { display: block; width: auto; margin: 10px 0 0 0; }
+    }
+</style>
+
 <header class="header header--mobile mobile-only">
     <div class="owl-carousel carousel--first mobile-only">
         <?php
@@ -96,8 +121,7 @@
                                 <h2><?php $id = $item['id'];
                                     echo $item['name']; ?>
                                     <?php if ($uncheck_btn == 1) { ?>
-                                        <a href="javascript:void(0);" class="button button--violet-light uncheck-btn" data-type="<?php echo $translit; ?>"
-                                           style="display:inline-block;width:auto;margin:0 0 0 16px;padding:4px 18px;border:2px solid #e01b22;color:#1A191F;font-size:14px;vertical-align:middle;">
+                                        <a href="javascript:void(0);" class="button button--violet-light uncheck-btn" data-type="<?php echo $translit; ?>">
                                             Убрать из сборки
                                         </a>
                                     <?php } ?></h2>

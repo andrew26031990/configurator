@@ -677,7 +677,7 @@ $(document).ready(function() {
                            { data: 'f_name', render: function (d) { return d ? d : ''; } },
                            { data: null, orderable: false, searchable: false, render: function (row) {
                                return row.image
-                                   ? '<img src="/configurator/images/products/' + row.image + '" style="height:50px;" />'
+                                   ? '<img src="/configurator/images/products/' + row.image + '" class="zoomable-img" style="height:50px;cursor:pointer;" />'
                                    : '';
                            }},
                            { data: null, orderable: false, searchable: false, render: function (row) {
@@ -721,6 +721,14 @@ $(document).ready(function() {
                },
                error: function (err) { alert(err.toString()); }
            });
+       });
+
+       // Просмотр картинки товара в увеличенном виде
+       $(document).on('click', '.zoomable-img', function () {
+           var src = $(this).attr('src');
+           if (!src) { return; }
+           $('#imagePreviewImg').attr('src', src);
+           $('#imagePreviewModal').modal('show');
        });
 
        // Удаление товара из списка категорий / отчёта

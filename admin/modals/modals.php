@@ -16,3 +16,9 @@
 <!-- Modal Filter-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalEditSborka.php'); ?>
 <!--End Modal Filter-->
+<!-- Image Preview Modal-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/imagePreviewModal.php'); ?>
+<!--End Image Preview Modal-->
+<!-- Add Sborka Modal-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalAddSborka.php'); ?>
+<!--End Add Sborka Modal-->

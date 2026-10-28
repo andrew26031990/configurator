@@ -26,7 +26,7 @@
                         <td><?php echo htmlspecialchars($item['name']); ?></td>
                         <td><?php echo $item['price']; ?></td>
                         <td><?php echo htmlspecialchars($item['f_name']); ?></td>
-                        <td><img src="/configurator/images/products/<?php echo $item['image']; ?>" style="height: 60px;" /></td>
+                        <td><img src="/configurator/images/products/<?php echo $item['image']; ?>" class="zoomable-img" style="height: 60px;cursor:pointer;" /></td>
                         <td>
                             <button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="<?php echo $item['id']; ?>">Изменить</button>
                         </td>

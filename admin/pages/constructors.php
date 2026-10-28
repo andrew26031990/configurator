@@ -1,6 +1,12 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0 text-gray-800">Сборки</h1>
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addSborkaModal">
+        <i class="fas fa-plus mr-1"></i> Добавить сборку
+    </button>
+</div>
+
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <!--<button type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Добавить товар</button>-->
         Список сборок
     </div>
     <div class="card-body">

@@ -4,8 +4,16 @@ include '../functions.php';
 header('Content-Type: application/json; charset=UTF-8');
 
 //Выборка из дерева
-$sql = "SELECT id, parent_id as parent, name as text FROM `tree`";
+$sql = "SELECT id, parent_id as parent, name as text, level FROM `tree`";
 $res = $mysqli->query($sql);
+
+//Иконки по уровню (level=3 — тип товара, отличается от остальных)
+$levelIcons = array(
+    0 => 'fas fa-home text-secondary',
+    1 => 'fas fa-desktop text-primary',
+    2 => 'fas fa-folder text-warning',
+    3 => 'fas fa-microchip text-info',
+);
 
 //Создаем масив где ключ массива является ID меню
 $cat = array();
@@ -14,18 +22,11 @@ while($data = mysqli_fetch_assoc($res)) {
     $thisref['id'] = $data['id']; // if id is 0  , it's a root node, replace with '#'
     $thisref['parent'] = $data['parent'] == 0 ? '#' : $data['parent'];// if parent id is 0, it's a root node, replace with '#'
     $thisref['text'] = $data['text'];
-    $thisref['icon'] = "../images/red-icon.png";
+    $lvl = (int)$data['level'];
+    $thisref['icon'] = isset($levelIcons[$lvl]) ? $levelIcons[$lvl] : 'fas fa-circle text-muted';
 
-    $cat[] = &$thisref;        
+    $cat[] = &$thisref;
 }
-
-function good_example(&$item,$key){
-   if($key['parent'] && $item=="0"){
-        $item='#'; // Do This!
-   }
-}
-
-array_walk_recursive($cat, 'good_example');
 //Выборка из дерева
 
 //Выборка из товаров

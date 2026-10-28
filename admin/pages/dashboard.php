@@ -1,121 +1,131 @@
+<?php
+$totalProducts = CountProducts($mysqli);
+$inCat         = CountProductsInCategories($mysqli);
+$noCat         = CountProductsWithoutCategory($mysqli);
+$filtersCount  = CountFilters($mysqli);
+$sborkiCount   = CountSborka($mysqli);
+
+$perBuild = getProductsPerBuild($mysqli);
+$buildLabels = array();
+$buildData   = array();
+foreach ($perBuild as $b) {
+    $buildLabels[] = $b['name'];
+    $buildData[]   = $b['count'];
+}
+?>
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-    <a href="#" style="display: none!important;" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
 </div>
 
-<!-- Content Row -->
+<!-- Карточки статистики -->
 <div class="row">
-
-    <!-- Earnings (Monthly) Card Example -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Общее количество товаров</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo CountProducts($mysqli); ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+            <div class="inner"><h3><?php echo $totalProducts; ?></h3><p>Всего товаров</p></div>
+            <div class="icon"><i class="fas fa-box"></i></div>
+            <a href="admin.php?view=products" class="small-box-footer">К товарам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
-
-    <!-- Earnings (Monthly) Card Example -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Общее количество фильтров</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo CountFilters($mysqli); ?></div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+            <div class="inner"><h3><?php echo $inCat; ?></h3><p>Разложено по категориям</p></div>
+            <div class="icon"><i class="fas fa-sitemap"></i></div>
+            <a href="admin.php?view=categories" class="small-box-footer">К категориям <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
-
-    <!-- Earnings (Monthly) Card Example -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Общее количество сборок</div>
-                        <div class="row no-gutters align-items-center">
-                            <div class="col-auto">
-                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800"><?php echo CountSborka($mysqli); ?></div>
-                            </div>
-                            <div class="col">
-                                <div class="progress progress-sm mr-2">
-                                    <div class="progress-bar bg-info" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="<?php echo CountSborka($mysqli); ?>" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner"><h3><?php echo $noCat; ?></h3><p>Без категории</p></div>
+            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <a href="admin.php?view=no_category" class="small-box-footer">Показать <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
-
-    <!-- Pending Requests Card Example -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Requests</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-comments fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-primary">
+            <div class="inner"><h3><?php echo $sborkiCount; ?></h3><p>Сборок</p></div>
+            <div class="icon"><i class="fas fa-desktop"></i></div>
+            <a href="admin.php?view=constructors" class="small-box-footer">К сборкам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
 </div>
 
-<!-- Content Row -->
-
+<!-- Второй ряд карточек -->
 <div class="row">
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-secondary">
+            <div class="inner"><h3><?php echo $filtersCount; ?></h3><p>Фильтров</p></div>
+            <div class="icon"><i class="fas fa-filter"></i></div>
+            <a href="admin.php?view=filters" class="small-box-footer">К фильтрам <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
 
-    <!-- Area Chart -->
-    <div class="col-xl-8 col-lg-7">
+<!-- Графики -->
+<div class="row">
+    <div class="col-lg-5">
         <div class="card shadow mb-4">
-            <!-- Card Header - Dropdown -->
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Количество заявок за промежуток времени</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
-                        <div class="dropdown-header">Dropdown Header:</div>
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
-                </div>
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Товары: в категориях vs без категории</h6>
             </div>
-            <!-- Card Body -->
             <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="myAreaChart"></canvas>
+                <div style="position:relative;height:260px;">
+                    <canvas id="catPie"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Pie Chart -->
-
+    <div class="col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Товаров по сборкам</h6>
+            </div>
+            <div class="card-body">
+                <div style="position:relative;height:260px;">
+                    <canvas id="buildBar"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    $(function () {
+        if (typeof Chart === 'undefined') { return; }
+
+        var pieEl = document.getElementById('catPie');
+        if (pieEl) {
+            new Chart(pieEl, {
+                type: 'doughnut',
+                data: {
+                    labels: ['В категориях', 'Без категории'],
+                    datasets: [{
+                        data: [<?php echo (int)$inCat; ?>, <?php echo (int)$noCat; ?>],
+                        backgroundColor: ['#1cc88a', '#f6c23e']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        var barEl = document.getElementById('buildBar');
+        if (barEl) {
+            new Chart(barEl, {
+                type: 'bar',
+                data: {
+                    labels: <?php echo json_encode($buildLabels, JSON_UNESCAPED_UNICODE); ?>,
+                    datasets: [{
+                        label: 'Товаров',
+                        data: <?php echo json_encode($buildData); ?>,
+                        backgroundColor: '#4e73df'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: { yAxes: [{ ticks: { beginAtZero: true } }] }
+                }
+            });
+        }
+    });
+</script>

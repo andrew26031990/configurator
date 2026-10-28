@@ -67,6 +67,18 @@ $(document).on("change", "input[type=checkbox]", function () {
   calculatePlusMinusFromChecked();
 });
 
+// Кнопка "Убрать" — снимает выбор товара данного типа и пересчитывает сборку
+$(document).on("click", ".uncheck-btn", function () {
+  var type = $(this).attr("data-type");
+  $("input[type=checkbox][name='" + type + "']").prop('checked', false);
+  if (typeof sel_price !== 'undefined') { sel_price.delete(type); }
+  if (typeof sel_bd_id !== 'undefined') { sel_bd_id.delete(type); }
+  if (typeof sel_quantity !== 'undefined') { sel_quantity.delete(type); }
+  $("." + type + " img").attr("src", "configurator/images/products/noimage.png");
+  generateConfig();
+  calculatePlusMinusFromChecked();
+});
+
 $(".list a").click(function () {
 
   var component = $(this).attr("data-type");

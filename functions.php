@@ -275,12 +275,77 @@ function CountFilters($mysqli)
 function CountSborka($mysqli)
 {
   $row = 0;
-  $res = $mysqli->query("select * from tree where level = '0'");  
-  if ($res) 
-    { 
-        $row = mysqli_num_rows($res); 
+  $res = $mysqli->query("select id from sborki");
+  if ($res)
+    {
+        $row = mysqli_num_rows($res);
     }
     return $row;
+}
+
+// Товаров реально привязано к существующим нодам дерева (разложено по категориям)
+function CountProductsInCategories($mysqli){
+    $res = $mysqli->query("SELECT COUNT(DISTINCT tp.prod_id) AS c
+                           FROM tree_prod tp
+                           JOIN products p ON p.id = tp.prod_id
+                           JOIN tree t ON t.id = tp.tree_id");
+    $row = $res ? $res->fetch_assoc() : null;
+    return $row ? (int)$row['c'] : 0;
+}
+
+// Товаров без категории (не привязаны ни к одной существующей ноде)
+function CountProductsWithoutCategory($mysqli){
+    $res = $mysqli->query("SELECT COUNT(*) AS c FROM products p
+                           WHERE NOT EXISTS (
+                               SELECT 1 FROM tree_prod tp
+                               JOIN tree t ON t.id = tp.tree_id
+                               WHERE tp.prod_id = p.id
+                           )");
+    $row = $res ? $res->fetch_assoc() : null;
+    return $row ? (int)$row['c'] : 0;
+}
+
+// Список товаров без категории (для отчёта)
+function getProductsWithoutCategory($mysqli){
+    $sql = "SELECT p.id, p.name, p.price, p.image, p.description, f.f_name
+            FROM products p
+            LEFT JOIN filters f ON f.id = p.f_id
+            WHERE NOT EXISTS (
+                SELECT 1 FROM tree_prod tp
+                JOIN tree t ON t.id = tp.tree_id
+                WHERE tp.prod_id = p.id
+            )
+            ORDER BY p.id";
+    $res = $mysqli->query($sql);
+    $cat = array();
+    while($row = $res->fetch_assoc()){ $cat[] = $row; }
+    return $cat;
+}
+
+// Кол-во товаров по сборкам (узлы level-1) — для графика
+function getProductsPerBuild($mysqli){
+    $builds = $mysqli->query("SELECT id, name, link FROM tree WHERE parent_id = 1 ORDER BY sort");
+    $out = array();
+    while($b = $builds->fetch_assoc()){
+        $bid = (int)$b['id'];
+        // Ветка "Готовые сборки" (kompyutery) наполняется из таблицы sborki, а не из tree_prod
+        if ($b['link'] === 'kompyutery') {
+            $out[] = array('name' => $b['name'], 'count' => CountSborka($mysqli));
+            continue;
+        }
+        $r = $mysqli->query("WITH RECURSIVE sub AS (
+                                SELECT id FROM tree WHERE id = $bid
+                                UNION ALL
+                                SELECT t.id FROM tree t JOIN sub ON t.parent_id = sub.id
+                             )
+                             SELECT COUNT(DISTINCT tp.prod_id) AS c
+                             FROM tree_prod tp
+                             JOIN products p ON p.id = tp.prod_id
+                             WHERE tp.tree_id IN (SELECT id FROM sub)");
+        $row = $r ? $r->fetch_assoc() : null;
+        $out[] = array('name' => $b['name'], 'count' => $row ? (int)$row['c'] : 0);
+    }
+    return $out;
 }
 
 function CheckLoginPass($mysqli, $login, $pass)

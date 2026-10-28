@@ -22,6 +22,20 @@
                         <input type="file" class="form-control-file" accept="image/*" name="picture">
                     </div>
                     <div class="form-group">
+                        <label for="tip_tovara_multi_modal">Выберите сборки и типы товара (можно несколько)</label>
+                        <select class="form-control" name="tip_tovar_tov[]" id="tip_tovara_multi_modal" multiple size="10">
+                            <?php $modalGroups = getProductTypesGrouped($mysqli);
+                            foreach ($modalGroups as $g){ ?>
+                                <optgroup label="<?php echo htmlspecialchars($g['build']); ?>">
+                                    <?php foreach ($g['types'] as $t){ ?>
+                                        <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['name']); ?></option>
+                                    <?php } ?>
+                                </optgroup>
+                            <?php } ?>
+                        </select>
+                        <small class="form-text text-muted">Удерживайте Ctrl (⌘ на Mac), чтобы выбрать несколько.</small>
+                    </div>
+                    <div class="form-group">
                         <div class="row-fluid">
                             <label for="filter">Выберите фильтр</label>
                             <select class="form-control" name="filter">

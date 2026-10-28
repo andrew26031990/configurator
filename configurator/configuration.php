@@ -94,7 +94,13 @@
                         <tr>
                             <td class="left-td">
                                 <h2><?php $id = $item['id'];
-                                    echo $item['name']; ?></h2>
+                                    echo $item['name']; ?>
+                                    <?php if ($uncheck_btn == 1) { ?>
+                                        <a href="javascript:void(0);" class="button button--violet-light uncheck-btn" data-type="<?php echo $translit; ?>"
+                                           style="display:inline-block;width:auto;margin:0 0 0 16px;padding:4px 18px;border:2px solid #e01b22;color:#1A191F;font-size:14px;vertical-align:middle;">
+                                            Убрать из сборки
+                                        </a>
+                                    <?php } ?></h2>
                                 <div class="left-td-inner">
                                     <!-- Табы - кнопки -->
                                     <div class="inner scroll-pane">

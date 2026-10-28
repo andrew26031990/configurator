@@ -19,7 +19,7 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
 
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
@@ -31,39 +31,36 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
 
     <title>PCMARKET - Dashboard</title>
 
-    <!-- Custom fonts for this template-->
-    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
-    <!--<script src="//cdn.ckeditor.com/4.11.1/standard/ckeditor.js"></script>-->
+    <!-- jQuery (нужен плагинам ниже) -->
     <script src="https://code.jquery.com/jquery-latest.min.js"></script>
-    <!-- Custom styles for this template-->
-    <link href="admin/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <!-- Google Font: Source Sans Pro (AdminLTE) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- AdminLTE 3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+    <!-- jsTree -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+    <!-- DataTables (Bootstrap 4) -->
     <link href="admin/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
 </head>
 
-<body id="page-top">
-<div class="preloader2" style="position: fixed; left: 0; top: 0; z-index: 999; width: 100%; height: 100%; overflow: visible; background: #333 url('images/preloader.gif') no-repeat center center;"></div>
-<?php //backup_tables('localhost', 'victors90_config', '5850058R', 'victors90_config', '*'); ?>
-<!-- Page Wrapper -->
-<div id="wrapper">
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <!-- Navbar / Topbar -->
+    <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/topbar.php'); ?>
+    <!-- /.navbar -->
 
     <!-- Sidebar -->
     <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/sidebar.php'); ?>
-    <!-- End of Sidebar -->
+    <!-- /Sidebar -->
 
     <!-- Content Wrapper -->
-    <div id="content-wrapper" class="d-flex flex-column">
-
-        <!-- Main Content -->
-        <div id="content">
-
-            <!-- Topbar -->
-            <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/topbar.php'); ?>
-            <!-- End of Topbar -->
-
-            <!-- Begin Page Content -->
+    <div class="content-wrapper">
+        <section class="content pt-3">
             <div class="container-fluid">
                 <?php
                     if(!isset($_GET['view']))
@@ -74,25 +71,16 @@ if (isset($_GET['view']) && ($_GET['view'] == 'exit_cab')) {
                       }
                 ?>
             </div>
-            <!-- /.container-fluid -->
-
-        </div>
-        <!-- End of Main Content -->
-
-        <!-- Footer -->
-        <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/footer.php'); ?>
-        <!-- End of Footer -->
-
+        </section>
     </div>
-    <!-- End of Content Wrapper -->
+    <!-- /.content-wrapper -->
+
+    <!-- Footer -->
+    <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/pages/footer.php'); ?>
+    <!-- /Footer -->
 
 </div>
-<!-- End of Page Wrapper -->
-
-<!-- Scroll to Top Button-->
-<a class="scroll-to-top rounded" href="#page-top">
-    <i class="fas fa-angle-up"></i>
-</a>
+<!-- ./wrapper -->
 
 <!-- Modals-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modals.php'); ?>

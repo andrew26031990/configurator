@@ -438,6 +438,22 @@ function getProductTreeIds($mysqli, $prodId)
 }
 
 /**
+ * Массив tree_id (узлов типа товара), к которым привязан фильтр.
+ *
+ * @return array<int,int>
+ */
+function getFilterTreeIds($mysqli, $filterId)
+{
+    $ids = array();
+
+    foreach (db_rows($mysqli, 'SELECT tree_id FROM tree_filter WHERE filter_id = ?', array((int) $filterId)) as $r) {
+        $ids[] = (int) $r['tree_id'];
+    }
+
+    return $ids;
+}
+
+/**
  * Кол-во товаров по сборкам (level-1 узлы) — для графика на дашборде.
  * Ветка "Готовые сборки" (link = kompyutery) наполняется из таблицы sborki,
  * а не из tree_prod, поэтому для неё берём CountSborka.

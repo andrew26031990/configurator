@@ -24,7 +24,7 @@
                             <?= e($item['f_name']); ?>
                         </td>
                         <td>
-                            <button dataId="<?php echo e($item['id'] . ':' . $item['f_name']); ?>" type="button" class="btn btn-info edit_filter">Изменить</button>
+                            <button data-id="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_filter">Изменить</button>
                         </td>
                         <td>
                             <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_filter">Удалить</button>

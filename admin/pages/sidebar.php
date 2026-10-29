@@ -44,29 +44,11 @@
                     </ul>
                 </li>
 
-                <?php $relViews = array('filters', 'addFilterToCat', 'deleteFilterFromCat'); ?>
-                <li class="nav-item <?php echo in_array($view, $relViews, true) ? 'menu-open' : ''; ?>">
-                    <a href="#" class="nav-link <?php echo in_array($view, $relViews, true) ? 'active' : ''; ?>">
+                <li class="nav-item">
+                    <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-filter"></i>
-                        <p>Фильтры <i class="right fas fa-angle-left"></i></p>
+                        <p>Фильтры</p>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Все фильтры</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="admin.php?view=addFilterToCat" class="nav-link <?php echo $view === 'addFilterToCat' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Добавление фильтра в категории</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="admin.php?view=deleteFilterFromCat" class="nav-link <?php echo $view === 'deleteFilterFromCat' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Удаление фильтра из категории</p>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
 
                 <li class="nav-item <?php echo $view === 'logins' ? 'menu-open' : ''; ?>">

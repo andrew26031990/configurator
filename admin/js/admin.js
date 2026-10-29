@@ -8,68 +8,6 @@ $(document).ready(function() {
 
     $('#tree_table_filter').css('float', 'right');
 
-    $(".delete_relation_filter_tree").on('click',(function(e) {
-        e.preventDefault();
-        var r = confirm("Вы действительно хотите удалить эту связь?");
-          if (r === true) {
-            var relation_id = $(this).attr("dataId");
-            var a = $(this).closest('tr').attr('id', relation_id);
-            $.ajax({
-            url: "../modules/deleteRelationTreeFilter.php",
-             type: "POST",
-             data:  {relation_id: relation_id},
-             beforeSend : function()
-             {
-              //alert('beforesend')
-             },
-             success: function(data)
-                {
-                    alert(data);
-                    a.css('display', 'none');
-                    window.location.reload();
-
-                },
-               error: function(e)
-                {
-                alert(e.toString());
-                   }
-                 });
-
-          }
-
-    }));
-
-    $(".delete_relation_prod_tree").on('click',(function(e) {
-        e.preventDefault();
-        var r = confirm("Вы действительно хотите удалить эту связь?");
-          if (r === true) {
-            var relation_id = $(this).attr("dataId");
-            var a = $(this).closest('tr').attr('id', relation_id);
-            $.ajax({
-            url: "../modules/deleteRelationTreeProduct.php",
-             type: "POST",
-             data:  {relation_id: relation_id},
-             beforeSend : function()
-             {
-              //alert('beforesend')
-             },
-             success: function(data)
-                {
-                    alert(data);
-                    a.css('display', 'none');
-                    window.location.reload();
-
-                },
-               error: function(e)
-                {
-                alert(e.toString());
-                   }
-                 });
-
-          }
-
-    }));
-
     $(".delete_prod").on('click',(function(e) {
         e.preventDefault();
         var r = confirm("Вы действительно хотите удалить товар?");
@@ -243,76 +181,6 @@ $(document).ready(function() {
         });
     });
 
-    $('select').on('change',(function(e) {
-        var type = $(this).attr('id');
-        if(type === "sborka2"){
-            //alert($("#sborka2").val());
-            var filter_id = $("#sborka2").val();
-            if(filter_id === '0'){
-                $('#tip_tovara2').find('option').remove();
-                $('#tip_tovara2').append('<option>Выберите тип товара</option>');
-            }else{
-                $.ajax({
-               url: "../modules/selectProductType.php",
-                type: "POST",
-                data:  {filter: filter_id},
-                beforeSend : function()
-                {
-                 //alert('beforesend')
-                },
-                success: function(data)
-                   {
-                       var myObj = typeof data === "string" ? JSON.parse(data) : data;
-                       $('#tip_tovara2').find('option').remove();
-                       $('#tip_tovara2').append('<option value="0">Выберите тип товара</option>');
-                       for (var i=0; i<myObj.length; i++) {
-                            var tr_str = `<option value='` + myObj[i]['id'] + `'>` + myObj[i]['name']  + `</option>`;
-                            $('#tip_tovara2').append(tr_str);
-                        }
-                   },
-                  error: function(e)
-                   {
-                       alert(e.toString());
-                   }
-                 });
-            }
-
-        }else if(type === "sborka1"){
-            //alert($("#sborka1").val());
-            var filter_id = $("#sborka1").val();
-            if(filter_id === '0'){
-                $('#tip_tovara1').find('option').remove();
-                $('#tip_tovara1').append('<option value="0">Выберите тип товара</option>');
-            }else{
-                $.ajax({
-               url: "../modules/selectProductType.php",
-                type: "POST",
-                data:  {filter: filter_id},
-                beforeSend : function()
-                {
-                 //alert('beforesend')
-                },
-                success: function(data)
-                   {
-                       var myObj = typeof data === "string" ? JSON.parse(data) : data;
-                       $('#tip_tovara1').find('option').remove();
-                       $('#tip_tovara1').append('<option>Выберите тип товара</option>');
-                       for (var i=0; i<myObj.length; i++) {
-                            var tr_str = `<option value='` + myObj[i]['id'] + `'>` + myObj[i]['name']  + `</option>`;
-                            $('#tip_tovara1').append(tr_str);
-                        }
-                   },
-                  error: function(e)
-                   {
-                       alert(e.toString());
-                   }
-                 });
-            }
-
-        }
-    }));
-
-
     $('#enableDisableFileInput').change(function() {
         if(this.checked) {
             $(this).closest("#editProduct").find("input[type=file]").removeAttr('disabled');
@@ -320,33 +188,6 @@ $(document).ready(function() {
             $(this).closest("#editProduct").find("input[type=file]").attr('disabled', 'disabled');
         }
     });
-
-    $("#tip_tovara2_tovar2").on('click',(function(e) {
-        e.preventDefault();
-        var tree_id = $('#tip_tovara2').val();
-        //var prod_id = $('#tovar2').val();
-        var prod_id_input = $('#prod_id_input').val();
-        //alert(prod_id_input + tree_id);
-        var prod_id = $('option[value="'+prod_id_input+'"]').attr('id');
-        //alert(prod_id);
-        $.ajax({
-        url: "../modules/addRelationProductTree.php",
-         type: "POST",
-         data:  {tree_id: tree_id, prod_id: prod_id},
-         beforeSend : function()
-         {
-          //alert(tree_id + " " + prod_id)
-         },
-         success: function(data)
-            {
-                alert(data);
-            },
-           error: function(e)
-            {
-                alert(e.toString());
-                   }
-                 });
-    }));
 
     $("#saveCategorySettings").on('click',(function(e) {
         var treeId = $('#settings_tree_id').val();
@@ -363,30 +204,6 @@ $(document).ready(function() {
             },
             error: function (err) { alert(err.toString()); }
         });
-    }));
-
-    $("#tip_tovara1_filter1").on('click',(function(e) {
-        e.preventDefault();
-        var tree_id = $('#tip_tovara1').val();
-        var filter_id = $('#filter1').val();
-        //alert(tree_id + filter_id);
-        $.ajax({
-        url: "../modules/addRelationFilterTree.php",
-         type: "POST",
-         data:  {tree_id: tree_id, filter_id: filter_id},
-         beforeSend : function()
-         {
-          //alert('beforesend')
-         },
-         success: function(data)
-            {
-                alert(data);
-            },
-           error: function(e)
-            {
-                alert(e.toString());
-                   }
-                 });
     }));
 
     $("#addProduct").on('submit',(function(e) {
@@ -632,15 +449,6 @@ $(document).ready(function() {
             type:'post'
         }
     });
-
-    $( "#leftPanel" ).click(function() {
-        if($('nav.col-md-2').hasClass('remove')){
-                       $('nav.col-md-2').removeClass('remove');
-               }else{
-                       $('nav.col-md-2').addClass('remove');
-               }
-
-       });
 
        function loadNodeProducts(treeId) {
            $.ajax({
@@ -915,39 +723,6 @@ $(document).ready(function() {
 
 
 
-                $("#addRootNode").on('click',(function(e) {
-                    e.preventDefault();
-                    var name = $('#level1').val();
-                    var parent_id, level, sort = 0;
-                    var enabled = 1;
-                    if(name === ''){
-                        alert('Поле не может быть пустым');
-                    }else{
-                        $.ajax({
-                           url: "../modules/addTreeNode.php",
-                            type: "POST",
-                            data:  {name: name, parent_id: parent_id, level: level, sort: sort, enabled: enabled},
-                            beforeSend : function()
-                            {
-                             //alert('beforesend')
-                            },
-                            success: function(data)
-                               {
-                                   console.log(data);
-                                 alert(data);
-                                $("#level1").val();
-                                $('#tree').jstree(true).refresh();
-                               },
-                              error: function(e)
-                               {
-                                   alert(e.toString());
-                               }
-                             });
-                    }
-                    //alert('befin');
-
-                   }));
-
     // ===== Страница "Товары без категории": DataTable + массовое удаление =====
     $('#no_cat_table').DataTable({
         "lengthChange": true,
@@ -1045,104 +820,3 @@ $(document).ready(function() {
     });
 
 });
-
-function number_format(number, decimals, dec_point, thousands_sep) {
-  // *     example: number_format(1234.56, 2, ',', ' ');
-  // *     return: '1 234,56'
-  number = (number + '').replace(',', '').replace(' ', '');
-  var n = !isFinite(+number) ? 0 : +number,
-    prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-    sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
-    dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
-    s = '',
-    toFixedFix = function(n, prec) {
-      var k = Math.pow(10, prec);
-      return '' + Math.round(n * k) / k;
-    };
-  // Fix for IE parseFloat(0.55).toFixed(0) = 0;
-  s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-  if (s[0].length > 3) {
-    s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
-  }
-  if ((s[1] || '').length < prec) {
-    s[1] = s[1] || '';
-    s[1] += new Array(prec - s[1].length + 1).join('0');
-  }
-  return s.join(dec);
-}
-
-function showGraph()
-{
-    {
-        $.post("../modules/ordersGraph.php",
-        function (data)
-        {
-            var a = typeof data === "string" ? JSON.parse(data) : data;
-            console.log(a);
-             var date = []; //mark
-            var quantity = [];
-
-            for (var i in a) {
-                quantity.push(a[i].quantity);
-                date.push(a[i].date);
-            }
-
-            var ctx = document.getElementById("myAreaChart");
-            var myLineChart = new Chart(ctx, {
-              type: 'line',
-              data: {
-                labels: date,
-                datasets: [{
-                  label: "Количество заказов за день",
-                  lineTension: 0.3,
-                  backgroundColor: "rgba(78, 115, 223, 0.05)",
-                  borderColor: "rgba(78, 115, 223, 1)",
-                  pointRadius: 3,
-                  pointBackgroundColor: "rgba(78, 115, 223, 1)",
-                  pointBorderColor: "rgba(78, 115, 223, 1)",
-                  pointHoverRadius: 3,
-                  pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
-                  pointHoverBorderColor: "rgba(78, 115, 223, 1)",
-                  pointHitRadius: 10,
-                  pointBorderWidth: 2,
-                  data: quantity,
-                }],
-              },options: {
-                maintainAspectRatio: false,
-                layout: {
-                  padding: {
-                    left: 10,
-                    right: 25,
-                    top: 25,
-                    bottom: 0
-                  }
-                }
-              }
-            });
-        });
-    }
-}
-
-function notifSet () {
-    alert();
-		if (!("Notification" in window))
-			alert ("Ваш браузер не поддерживает уведомления.");
-		else if (Notification.permission === "granted")
-			setTimeout(notifyMe, 2000);
-		else if (Notification.permission !== "denied") {
-			Notification.requestPermission (function (permission) {
-				if (!('permission' in Notification))
-					Notification.permission = permission;
-				if (permission === "granted")
-					setTimeout(notifyMe, 2000);
-			});
-		}
-            }
-
-            function notifyMe () {
-		var notification = new Notification ("Все еще работаешь?", {
-			tag : "ache-mail",
-			body : "Пора сделать паузу и отдохнуть",
-			icon : "https://itproger.com/img/notify.png"
-		});
-            }

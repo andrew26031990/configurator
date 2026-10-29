@@ -20,7 +20,13 @@ if (isset($_GET['view']) && $_GET['view'] === 'exit_cab') {
  */
 $view = isset($_GET['view']) ? (string) $_GET['view'] : 'dashboard';
 
-if (!preg_match('/^[a-zA-Z0-9_-]+$/', $view)) {
+// Явный белый список страниц админки — подключить произвольный .php через ?view нельзя.
+$allowedViews = array(
+    'dashboard', 'products', 'categories', 'no_category',
+    'filters', 'constructors', 'add_constructor', 'logins',
+);
+
+if (!in_array($view, $allowedViews, true)) {
     $view = 'dashboard';
 }
 

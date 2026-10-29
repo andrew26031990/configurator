@@ -14,6 +14,8 @@ if ($id === false || $id <= 0) {
 
 try {
     db_exec($mysqli, 'DELETE FROM products WHERE id = ?', array($id));
+    // Чистим связи товара с категориями, чтобы не оставались висячие строки.
+    db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ?', array($id));
     // delete_upload не выпустит за пределы каталога картинок:
     // раньше сюда можно было передать "../../functions.php".
     delete_upload(APP_ROOT . '/configurator/images/products', $image);

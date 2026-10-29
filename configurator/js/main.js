@@ -736,7 +736,7 @@ function format(n, currency) {
 function generateConfiguration(){
   var numBlocks = $('.scrollbar-inner').length;
   var Blocks = $('.scrollbar-inner');
-  for(var i=0;i<2;i++){ //numBlocks
+  for(var i=0;i<numBlocks;i++){
     var radioItemsEachBlockLength = $('.scrollbar-inner table:eq(' + i + ') input:checkbox').length;
     //randNum = Math.floor(Math.random() * radioItemsEachBlockLength);
 

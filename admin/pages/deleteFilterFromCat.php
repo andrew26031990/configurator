@@ -24,7 +24,7 @@
                             <?= e($item['f_name']); ?>
                         </td>
                         <td>
-                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_relation_filter_tree">Delete</button>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_relation_filter_tree">Удалить</button>
                         </td>
                     </tr>
                 <?php } ?>

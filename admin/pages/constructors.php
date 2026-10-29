@@ -1,6 +1,12 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0 text-gray-800">Сборки</h1>
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addSborkaModal">
+        <i class="fas fa-plus mr-1"></i> Добавить сборку
+    </button>
+</div>
+
 <div class="card shadow mb-4">
     <div class="card-header py-3">
-        <!--<button type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Добавить товар</button>-->
         Список сборок
     </div>
     <div class="card-body">
@@ -14,8 +20,8 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
-                    <th>удалить</th>
-                    <th>редактировать</th>
+                    <th>Изменить</th>
+                    <th>Удалить</th>
                 </tr>
                 </thead>
                 <?php $sborki = getAllConstructors($mysqli);foreach ($sborki as $item){ ?>
@@ -39,10 +45,10 @@
                             <img src="/configurator/images/sborki/<?= e($item['image']); ?>" style="height: 85px;" />
                         </td>
                         <td>
-                            <button dataId="<?php echo e($item['id']); ?>:<?php echo e($item['image']); ?>" type="button" class="btn btn-danger delete_sborka">Delete</button>
+                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Изменить</button>
                         </td>
                         <td>
-                            <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Edit</button>
+                            <button dataId="<?php echo e($item['id']); ?>:<?php echo e($item['image']); ?>" type="button" class="btn btn-danger delete_sborka">Удалить</button>
                         </td>
                     </tr>
                 <?php } ?>
@@ -54,8 +60,8 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
-                    <th>удалить</th>
-                    <th>редактировать</th>
+                    <th>Изменить</th>
+                    <th>Удалить</th>
                 </tr>
                 </tfoot>
             </table>

@@ -343,7 +343,134 @@ function CountFilters($mysqli)
 
 function CountSborka($mysqli)
 {
-    return db_count($mysqli, 'SELECT COUNT(*) FROM tree WHERE level = 0');
+    return db_count($mysqli, 'SELECT COUNT(*) FROM sborki');
+}
+
+/**
+ * Товаров реально привязано к существующим нодам дерева (разложено по категориям).
+ */
+function CountProductsInCategories($mysqli)
+{
+    return db_count(
+        $mysqli,
+        'SELECT COUNT(DISTINCT tp.prod_id)
+           FROM tree_prod tp
+           JOIN products p ON p.id = tp.prod_id
+           JOIN tree t ON t.id = tp.tree_id'
+    );
+}
+
+/**
+ * Товаров без категории (не привязаны ни к одной существующей ноде дерева).
+ */
+function CountProductsWithoutCategory($mysqli)
+{
+    return db_count(
+        $mysqli,
+        'SELECT COUNT(*) FROM products p
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tree_prod tp
+                JOIN tree t ON t.id = tp.tree_id
+               WHERE tp.prod_id = p.id
+          )'
+    );
+}
+
+/**
+ * Список товаров без категории (для отчёта).
+ */
+function getProductsWithoutCategory($mysqli)
+{
+    return db_rows(
+        $mysqli,
+        'SELECT p.id, p.name, p.price, p.image, p.description, f.f_name
+           FROM products p
+           LEFT JOIN filters f ON f.id = p.f_id
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tree_prod tp
+                JOIN tree t ON t.id = tp.tree_id
+               WHERE tp.prod_id = p.id
+          )
+          ORDER BY p.id'
+    );
+}
+
+/**
+ * Типы товара (level 3), сгруппированные по сборкам (level 1) — для <optgroup> в мультиселекте.
+ * Структура: [ ['build' => '...', 'types' => [ ['id'=>, 'name'=>], ... ] ], ... ]
+ */
+function getProductTypesGrouped($mysqli)
+{
+    $groups = array();
+    $builds = db_rows($mysqli, 'SELECT id, name FROM tree WHERE parent_id = 1 ORDER BY sort');
+
+    foreach ($builds as $b) {
+        $types = db_rows(
+            $mysqli,
+            'SELECT id, name FROM tree
+              WHERE parent_id IN (SELECT id FROM tree WHERE parent_id = ?)
+              ORDER BY sort',
+            array((int) $b['id'])
+        );
+
+        if ($types) {
+            $groups[] = array('build' => $b['name'], 'types' => $types);
+        }
+    }
+
+    return $groups;
+}
+
+/**
+ * Массив tree_id (узлов типа товара), к которым привязан товар.
+ *
+ * @return array<int,int>
+ */
+function getProductTreeIds($mysqli, $prodId)
+{
+    $ids = array();
+
+    foreach (db_rows($mysqli, 'SELECT tree_id FROM tree_prod WHERE prod_id = ?', array((int) $prodId)) as $r) {
+        $ids[] = (int) $r['tree_id'];
+    }
+
+    return $ids;
+}
+
+/**
+ * Кол-во товаров по сборкам (level-1 узлы) — для графика на дашборде.
+ * Ветка "Готовые сборки" (link = kompyutery) наполняется из таблицы sborki,
+ * а не из tree_prod, поэтому для неё берём CountSborka.
+ */
+function getProductsPerBuild($mysqli)
+{
+    $out    = array();
+    $builds = db_rows($mysqli, 'SELECT id, name, link FROM tree WHERE parent_id = 1 ORDER BY sort');
+
+    foreach ($builds as $b) {
+        if ($b['link'] === 'kompyutery') {
+            $out[] = array('name' => $b['name'], 'count' => CountSborka($mysqli));
+            continue;
+        }
+
+        $count = db_count(
+            $mysqli,
+            'WITH RECURSIVE sub AS (
+                 SELECT id FROM tree WHERE id = ?
+                 UNION ALL
+                 SELECT t.id FROM tree t JOIN sub ON t.parent_id = sub.id
+             )
+             SELECT COUNT(DISTINCT tp.prod_id)
+               FROM tree_prod tp
+               JOIN products p ON p.id = tp.prod_id
+              WHERE tp.tree_id IN (SELECT id FROM sub)',
+            array((int) $b['id'])
+        );
+
+        $out[] = array('name' => $b['name'], 'count' => $count);
+    }
+
+    return $out;
 }
 
 /* ------------------------------------------------------------------ */

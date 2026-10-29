@@ -2,52 +2,30 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <h5 class="modal-title" id="settingsCategoryModalTitle">Настройки типа товара</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <h1 class="h3 mb-2 text-gray-800">Добавление товара в категории</h1>
-                <div class="form-group">
-                    <label for="levels2">Выберите сборку</label>
-                    <select class="form-control" name="levels2" id="sborka2">
-                        <option value="0">Выберите сборку</option>
-                        <?php $node = getNodes($mysqli, 1);
-                        foreach ($node as $item){
-                            ?>
-                            <option value="<?php echo e($item['id']); ?>"><?php echo e($item['name']); ?></option>
-                        <?php } ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="levels2">Выберите тип товара</label>
-                    <select class="form-control" name="levels2" id="tip_tovara2">
-                        <option value="0">Выберите тип товара</option>
-                    </select>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="uncheck_btn">
+                <input type="hidden" id="settings_tree_id" value="">
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="1" id="uncheck_btn">
                     <label class="form-check-label" for="uncheck_btn">
-                        Управление кнопкой "Убрать" (поставьте галочку если хотите показывать эту кнопку)
+                        Показывать кнопку «Убрать» (управление кнопкой "Убрать")
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="onLoadcountable">
+                    <input class="form-check-input" type="checkbox" value="1" id="onLoadcountable">
                     <label class="form-check-label" for="onLoadcountable">
                         Автодобавление в конфигурацию товара из данного типа товара
                     </label>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="defaultCheck2" disabled>
-                    <label class="form-check-label" for="defaultCheck2">
-                        Disabled checkbox
-                    </label>
-                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveCategorySettings">Save changes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="saveCategorySettings">Сохранить</button>
             </div>
         </div>
     </div>

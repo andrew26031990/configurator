@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    showGraph();
     $('body .preloader2').fadeOut('slow', function () {
             });
     /*setTimeout(function(){
@@ -342,8 +341,20 @@ $(document).ready(function() {
     }));
 
     $("#saveCategorySettings").on('click',(function(e) {
-        //e.preventDefault();
-        alert();
+        var treeId = $('#settings_tree_id').val();
+        var uncheck = $('#uncheck_btn').is(':checked') ? 1 : 0;
+        var onload = $('#onLoadcountable').is(':checked') ? 1 : 0;
+        $.ajax({
+            url: "/modules/admin/saveNodeSettings.php",
+            type: "POST",
+            data: { tree_id: treeId, uncheck_btn: uncheck, onLoadcountable: onload },
+            success: function (resp) {
+                var obj = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                if (obj.success) { $('#settingsCategoryModal').modal('hide'); }
+                else { alert('Ошибка сохранения: ' + (obj.error || '')); }
+            },
+            error: function (err) { alert(err.toString()); }
+        });
     }));
 
     $("#tip_tovara1_filter1").on('click',(function(e) {
@@ -394,7 +405,7 @@ $(document).ready(function() {
                   else if(data == 'Неверное расширение картинки')
                   {
                     alert(data);
-                  }else if(data == 'Товар успешно добавлен в базу'){
+                  }else if(data == 'Товар успешно добавлен в базу, связь добавлена'){
                       alert(data);
                      $("#addProduct")[0].reset();
                      window.location.reload();
@@ -623,38 +634,94 @@ $(document).ready(function() {
 
        });
 
-       $('#tree').on("select_node.jstree", function (e, data) {
-           //alert("node_id: " + data.node.id);
+       function loadNodeProducts(treeId) {
+           $.ajax({
+               url: "/modules/admin/getProductsByNode.php",
+               type: "POST",
+               data: { tree_id: treeId },
+               success: function (resp) {
+                   var obj = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   $('#node_prod_count').text(obj.count);
+                   $('#node_products_table').DataTable({
+                       destroy: true, paging: true, searching: true,
+                       data: obj.products,
+                       columns: [
+                           { data: 'id' },
+                           { data: 'name' },
+                           { data: 'price' },
+                           { data: 'f_name', render: function (d) { return d ? d : ''; } },
+                           { data: null, orderable: false, searchable: false, render: function (row) {
+                               return row.image
+                                   ? '<img src="/configurator/images/products/' + row.image + '" class="zoomable-img" style="height:50px;cursor:pointer;" />'
+                                   : '';
+                           }},
+                           { data: null, orderable: false, searchable: false, render: function (row) {
+                               return '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>';
+                           }},
+                           { data: null, orderable: false, searchable: false, render: function (row) {
+                               return '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>';
+                           }}
+                       ]
+                   });
+               },
+               error: function (err) { alert(err.toString()); }
+           });
+       }
 
-              $.ajax({
-                url: "/modules/admin/getFilters.php",
-                 type: "POST",
-                 data:  {tree_id: data.node.id},
-                 beforeSend : function()
-                 {
-                  $(".preloader").css("display", "block");
-                 },
-                 success: function(data)
-                    {
-                        var myObj = typeof data === "string" ? JSON.parse(data) : data;
-                        $('#cat_filter_table').DataTable( {
-                            paging: false,
-                            searching: false,
-                            destroy: true,
-                            data: data,
-                            columns: [
-                                { data: 'id' },
-                                { data: 'f_name' }
-                            ]
-                        });
-                    },
-                   error: function(e)
-                    {
-                        alert('here');
-                        alert(e.toString());
-                       }
-                    });
-                    $(".preloader").css("display", "none");
+       $('#tree').on("select_node.jstree", function (e, data) {
+           loadNodeProducts(data.node.id);
+       });
+
+       // Редактирование товара из списка категорий / отчёта — модалка #exampleModalEditProd
+       $(document).on('click', '.edit_prod_cat', function () {
+           var id = $(this).attr('data-id');
+           $.ajax({
+               url: "/modules/admin/getProduct.php",
+               type: "POST",
+               data: { prod_id: id },
+               success: function (resp) {
+                   var p = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   if (!p) { return; }
+                   $('#editProduct').find('input[name=name]').val(p.name);
+                   $('#editProduct').find('textarea[name=description]').val(p.description);
+                   $('#editProduct').find('input[name=price]').val(p.price);
+                   $('#editProduct').find('input[name=idTovara]').val(p.id);
+                   $('#editProduct').find('input[name=oldImg]').val(p.image ? 'configurator/images/products/' + p.image : '');
+                   $('#editProduct select[name=filter]').val(p.f_id);
+                   $('#editProduct_trees option').prop('selected', false);
+                   (p.trees || []).forEach(function (t) {
+                       $('#editProduct_trees option[value="' + t + '"]').prop('selected', true);
+                   });
+                   $('#exampleModalEditProd').modal('show');
+               },
+               error: function (err) { alert(err.toString()); }
+           });
+       });
+
+       // Удаление товара из списка категорий / отчёта
+       $(document).on('click', '.delete_prod_cat', function () {
+           if (!confirm('Вы действительно хотите удалить товар?')) { return; }
+           var id = $(this).attr('data-id');
+           var img = $(this).attr('data-img') || '';
+           $.ajax({
+               url: "/modules/deleteProduct.php",
+               type: "POST",
+               data: { prod_id: id + ':' + img },
+               success: function () {
+                   var sel = $('#tree').length ? $('#tree').jstree(true).get_selected() : [];
+                   if (sel && sel.length) { loadNodeProducts(sel[0]); }
+                   else { window.location.reload(); }
+               },
+               error: function (err) { alert(err.toString()); }
+           });
+       });
+
+       // Просмотр картинки товара в увеличенном виде
+       $(document).on('click', '.zoomable-img', function () {
+           var src = $(this).attr('src');
+           if (!src) { return; }
+           $('#imagePreviewImg').attr('src', src);
+           $('#imagePreviewModal').modal('show');
        });
 
 
@@ -796,6 +863,34 @@ $(document).ready(function() {
                 }).on("select_node.jstree", function (e, data) {
 
                 });
+
+                // Все ноды раскрыты по умолчанию
+                $('#tree').on('ready.jstree refresh.jstree', function () {
+                    $('#tree').jstree('open_all');
+                });
+
+                // Двойной клик по тип-ноде (level=3) -> модалка настроек с актуальными значениями
+                $('#tree').on('dblclick.jstree', '.jstree-anchor', function () {
+                    var node = $('#tree').jstree(true).get_node(this);
+                    // level-3 нода: предки [тип-родитель, группа, сборка, '#'] => length === 4
+                    if (node && node.parents && node.parents.length === 4) {
+                        $.ajax({
+                            url: "/modules/admin/getNodeSettings.php",
+                            type: "POST",
+                            data: { tree_id: node.id },
+                            success: function (resp) {
+                                var s = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                                if (!s) { return; }
+                                $('#settings_tree_id').val(s.id);
+                                $('#settingsCategoryModalTitle').text('Настройки: ' + s.name);
+                                $('#uncheck_btn').prop('checked', parseInt(s.uncheck_btn) === 1);
+                                $('#onLoadcountable').prop('checked', parseInt(s.onLoadcountable) === 1);
+                                $('#settingsCategoryModal').modal('show');
+                            },
+                            error: function (err) { alert(err.toString()); }
+                        });
+                    }
+                });
                     /*.bind("move_node.jstree", function(e, data) {
                         alert(data.node.id);
                         alert(data.parent);
@@ -845,6 +940,101 @@ $(document).ready(function() {
 
                    }));
 
+    // ===== Страница "Товары без категории": DataTable + массовое удаление =====
+    $('#no_cat_table').DataTable({
+        "lengthChange": true,
+        "columnDefs": [{ "orderable": false, "targets": [0, 5, 6, 7] }]
+    });
+
+    // Выбор сохраняется между страницами DataTables (ключ — id товара)
+    var noCatSelected = {}; // id -> image
+
+    function updateNoCatToolbar() {
+        var count = Object.keys(noCatSelected).length;
+        $('#noCatSelCount').text(count);
+        if (count > 0) { $('#deleteSelectedNoCat, #deleteAllNoCat').show(); }
+        else { $('#deleteSelectedNoCat, #deleteAllNoCat').hide(); }
+    }
+
+    function updateNoCatSelectAllState() {
+        var $boxes = $('#no_cat_table tbody .no-cat-check');
+        var allChecked = $boxes.length > 0 && $boxes.filter(':checked').length === $boxes.length;
+        $('#no_cat_select_all').prop('checked', allChecked);
+    }
+
+    function restoreNoCatChecks() {
+        $('#no_cat_table tbody .no-cat-check').each(function () {
+            this.checked = noCatSelected.hasOwnProperty($(this).attr('data-id'));
+        });
+        updateNoCatSelectAllState();
+        updateNoCatToolbar();
+    }
+    $('#no_cat_table').on('draw.dt', restoreNoCatChecks);
+
+    $(document).on('change', '.no-cat-check', function () {
+        var id = $(this).attr('data-id');
+        var img = $(this).attr('data-img') || '';
+        if (this.checked) { noCatSelected[id] = img; } else { delete noCatSelected[id]; }
+        updateNoCatSelectAllState();
+        updateNoCatToolbar();
+    });
+
+    $(document).on('change', '#no_cat_select_all', function () {
+        var checked = this.checked;
+        $('#no_cat_table tbody .no-cat-check').each(function () {
+            this.checked = checked;
+            var id = $(this).attr('data-id');
+            var img = $(this).attr('data-img') || '';
+            if (checked) { noCatSelected[id] = img; } else { delete noCatSelected[id]; }
+        });
+        updateNoCatToolbar();
+    });
+
+    $(document).on('click', '#deleteSelectedNoCat', function () {
+        var items = [];
+        for (var id in noCatSelected) {
+            if (noCatSelected.hasOwnProperty(id)) {
+                items.push(id + ':' + (noCatSelected[id] || ''));
+            }
+        }
+        if (items.length === 0) { return; }
+        if (!confirm('Удалить выбранные товары (' + items.length + ' шт.)? Действие необратимо.')) { return; }
+        $.ajax({
+            url: "/modules/deleteProductsBulk.php",
+            type: "POST",
+            data: { items: items },
+            success: function (resp) {
+                var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                alert('Удалено товаров: ' + (r.deleted || 0));
+                window.location.reload();
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
+
+    $(document).on('click', '#deleteAllNoCat', function () {
+        var phrase = prompt('Это удалит ВСЕ товары без категории безвозвратно.\nЧтобы подтвердить, введите: удалить все');
+        if (phrase === null) { return; }
+        if (phrase.trim().toLowerCase() !== 'удалить все') {
+            alert('Подтверждение не совпадает. Удаление отменено.');
+            return;
+        }
+        $.ajax({
+            url: "/modules/deleteAllNoCategory.php",
+            type: "POST",
+            data: { confirm: phrase },
+            success: function (resp) {
+                var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                if (r.success) {
+                    alert('Удалено товаров без категории: ' + (r.deleted || 0));
+                    window.location.reload();
+                } else {
+                    alert('Ошибка: ' + (r.error || 'не удалось удалить'));
+                }
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
 
 });
 

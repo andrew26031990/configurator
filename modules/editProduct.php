@@ -6,11 +6,35 @@ require_admin();
 // из-за чего замена картинки товара молча не работала.
 $uploadDir = APP_ROOT . '/configurator/images/products';
 
+/**
+ * Перезаписывает связи товара со сборками/типами (tree_prod) по выбору из мультиселекта.
+ */
+function syncProductTrees($mysqli, $prodId, array $treeIds)
+{
+    db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ?', array((int) $prodId));
+    foreach ($treeIds as $tid) {
+        db_exec($mysqli, 'INSERT INTO tree_prod (tree_id, prod_id) VALUES (?, ?)', array((int) $tid, (int) $prodId));
+    }
+}
+
 $id          = post_int('idTovara');
 $name        = post_str('name', 200);
 $description = post_str('description', 65535);
 $price       = (int) preg_replace('/[^0-9]/', '', post_str('price', 30));
 $filterId    = post_int('filter');
+
+// Мультивыбор сборок/типов: tip_tovar_tov[] -> массив tree_id (может быть пустым — тогда все связи снимаются).
+$treeIdsRaw = isset($_POST['tip_tovar_tov']) && is_array($_POST['tip_tovar_tov'])
+    ? $_POST['tip_tovar_tov']
+    : (isset($_POST['tip_tovar_tov']) ? array($_POST['tip_tovar_tov']) : array());
+$treeIds = array();
+foreach ($treeIdsRaw as $t) {
+    $tid = filter_var($t, FILTER_VALIDATE_INT);
+    if ($tid !== false && $tid > 0) {
+        $treeIds[$tid] = $tid;
+    }
+}
+$treeIds = array_values($treeIds);
 
 if ($id === null || $id <= 0 || $name === '' || $description === '' || $price <= 0 || $filterId === null) {
     http_response_code(400);
@@ -26,6 +50,7 @@ if (!$hasNewImage) {
             'UPDATE products SET name = ?, description = ?, price = ?, f_id = ? WHERE id = ?',
             array($name, $description, $price, $filterId, $id)
         );
+        syncProductTrees($mysqli, $id, $treeIds);
         echo 'Данные товара были успешно изменены';
     } catch (Throwable $e) {
         error_log('editProduct: ' . $e->getMessage());
@@ -66,6 +91,8 @@ try {
         'UPDATE products SET name = ?, description = ?, price = ?, image = ?, f_id = ? WHERE id = ?',
         array($name, $description, $price, $fileName, $filterId, $id)
     );
+
+    syncProductTrees($mysqli, $id, $treeIds);
 
     if ($current && $current['image'] !== '') {
         delete_upload($uploadDir, $current['image']);

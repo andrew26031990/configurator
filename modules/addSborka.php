@@ -4,6 +4,11 @@ require_admin();
 
 $uploadDir = APP_ROOT . '/configurator/images/sborki';
 
+// Папка загрузок может отсутствовать на свежем окружении — создаём.
+if (!is_dir($uploadDir)) {
+    @mkdir($uploadDir, 0775, true);
+}
+
 // category_id = 97 — узел "Готовые сборки" в таблице tree.
 const SBORKI_TREE_ID = 97;
 

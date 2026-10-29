@@ -1,111 +1,90 @@
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<?php $view = isset($view) ? (string) $view : (isset($_GET['view']) ? (string) $_GET['view'] : 'dashboard'); ?>
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
 
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
-        <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-laugh-wink"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">PCMARKET</div>
+    <!-- Brand -->
+    <a href="/" class="brand-link text-center">
+        <span class="brand-text font-weight-light"><b>PC</b>MARKET</span>
     </a>
 
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
+    <!-- Sidebar -->
+    <div class="sidebar">
 
-    <!-- Nav Item - Dashboard -->
-    <li class="nav-item active">
-        <a class="nav-link" href="/admin.php">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span></a>
-    </li>
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
-    <!-- Divider -->
-    <hr class="sidebar-divider">
+                <li class="nav-item">
+                    <a href="/admin.php" class="nav-link <?php echo $view === 'dashboard' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
 
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Interface
+                <?php $componentViews = array('products', 'categories', 'no_category', 'constructors', 'add_constructor'); ?>
+                <li class="nav-item <?php echo in_array($view, $componentViews, true) ? 'menu-open' : ''; ?>">
+                    <a href="#" class="nav-link <?php echo in_array($view, $componentViews, true) ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-microchip"></i>
+                        <p>Товары и сборки <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="admin.php?view=products" class="nav-link <?php echo in_array($view, array('products', 'categories'), true) ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Товары</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="admin.php?view=no_category" class="nav-link <?php echo $view === 'no_category' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Товары без категории</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="admin.php?view=constructors" class="nav-link <?php echo in_array($view, array('constructors', 'add_constructor'), true) ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Все сборки</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <?php $relViews = array('filters', 'addFilterToCat', 'deleteFilterFromCat'); ?>
+                <li class="nav-item <?php echo in_array($view, $relViews, true) ? 'menu-open' : ''; ?>">
+                    <a href="#" class="nav-link <?php echo in_array($view, $relViews, true) ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-filter"></i>
+                        <p>Фильтры <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Все фильтры</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="admin.php?view=addFilterToCat" class="nav-link <?php echo $view === 'addFilterToCat' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Добавление фильтра в категории</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="admin.php?view=deleteFilterFromCat" class="nav-link <?php echo $view === 'deleteFilterFromCat' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Удаление фильтра из категории</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item <?php echo $view === 'logins' ? 'menu-open' : ''; ?>">
+                    <a href="#" class="nav-link <?php echo $view === 'logins' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Пользователи <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="admin.php?view=logins" class="nav-link <?php echo $view === 'logins' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Учетные записи</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+        </nav>
     </div>
-
-    <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Компоненты</span>
-        </a>
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Компоненты</h6>
-                <a class="collapse-item" href="admin.php?view=products">Товары</a>
-                <a class="collapse-item" href="admin.php?view=filters">Фильтры</a>
-            </div>
-        </div>
-    </li>
-
-    <!-- Nav Item - Utilities Collapse Menu -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
-            <i class="fas fa-fw fa-wrench"></i>
-            <span>Связи</span>
-        </a>
-        <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Связи:</h6>
-<!--                <a class="collapse-item" href="admin.php?view=addProdToCat">Добавление товара в категории</a>-->
-                <a class="collapse-item" href="admin.php?view=addFilterToCat">Добавление фильтра в категории</a>
-                <hr>
-                <a class="collapse-item" href="admin.php?view=deleteProdFromCat">Удаление товара из категории</a>
-                <a class="collapse-item" href="admin.php?view=deleteFilterFromCat">Удаление фильтра из категории</a>
-            </div>
-        </div>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider">
-
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Addons
-    </div>
-
-    <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
-            <i class="fas fa-fw fa-folder"></i>
-            <span>Авторизация</span>
-        </a>
-        <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="admin.php?view=logins">Учетные записи</a>
-            </div>
-        </div>
-    </li>
-
-    <!-- Nav Item - Charts -->
-    <li class="nav-item">
-        <a class="nav-link" href="admin.php?view=categories">
-            <i class="fas fa-fw fa-chart-area"></i>
-            <span>Категории</span></a>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePagesSborki" aria-expanded="true" aria-controls="collapsePagesSborki">
-            <i class="fas fa-fw fa-folder"></i>
-            <span>Сборки</span>
-        </a>
-        <div id="collapsePagesSborki" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="admin.php?view=add_constructor">Добавить сборку</a>
-                <a class="collapse-item" href="admin.php?view=constructors">Все сборки</a>
-            </div>
-        </div>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
-
-    <!-- Sidebar Toggler (Sidebar) -->
-    <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0"  style="display: none;" id="sidebarToggle"></button>
-    </div>
-
-</ul>
+    <!-- /.sidebar -->
+</aside>

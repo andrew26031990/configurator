@@ -70,39 +70,21 @@
 
     function configLinkToEmail(){
         var generatedLink = "";
-        var link = window.location.href;
         $.each($("input[type=checkbox]:checked"), function () {
             generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
         });
-        var result = link.split('&')[0] + generatedLink;
-        $("#sborkaLink").attr("value", result.split('#').join(''));
+        // shareBaseUrl/appendShareParams объявлены в main.js (подключается раньше).
+        $("#sborkaLink").attr("value", appendShareParams(shareBaseUrl(), generatedLink));
     }
-
-    /*function generateConfigToLink(){
-        var generatedLink = "";
-        var link = window.location.href;
-        $.each($("input[type=checkbox]:checked"), function () {
-            generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id");
-        });
-        var result = link.split('&')[0] + generatedLink;
-        navigator.clipboard.writeText(result.split('#').join(''))
-            .then(() => {
-                alert("Ссылка на сборку скопирована");
-            })
-            .catch(err => {
-                console.log('Невозможно скопировать ссылку на сборку', err);
-            });
-    }*/
 
     function generateConfigToLink(){
         var generatedLink = "";
-        var link = window.location.href;
         var p = $('.total-title').html().substr(0, $('.total-title').html().length - 4);
         $.each($("input[type=checkbox]:checked"), function () {
             generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
         });
-        var result = link.split('&')[0] + generatedLink + '&p=' + p;
-        navigator.clipboard.writeText(result.split('#').join(''))
+        generatedLink += '&p=' + p;
+        navigator.clipboard.writeText(appendShareParams(shareBaseUrl(), generatedLink))
             .then(() => {
                 alert("Ссылка на сборку скопирована");
             })

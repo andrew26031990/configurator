@@ -9,8 +9,15 @@ RewriteRule ^(.*)$ https://www.configurator.pcmarket.uz/$1 [R,L]
 RewriteBase     /
 
 RewriteRule ^(.*)/$ /$1 [L,R=301]
-RewriteRule ^(\w+)$ index.php?cat=$1 [L,NC]
-#RewriteRule ^cat/(\w+)$ index.php?cat=$1 [L,NC]
+
+# ЧПУ: /<slug> -> index.php?cat=<slug>
+# Слаг допускает буквы/цифры/подчёркивание и дефис (например play-profy).
+# Не перехватываем реально существующие файлы и каталоги (admin.php, assets и т.п.),
+# а ?page= и прочие параметры пробрасываем через QSA.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([\w-]+)$ index.php?cat=$1 [L,QSA,NC]
+#RewriteRule ^cat/([\w-]+)$ index.php?cat=$1 [L,QSA,NC]
 
 
 

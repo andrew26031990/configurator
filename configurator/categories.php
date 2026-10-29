@@ -22,7 +22,7 @@
                     $label = $value['name'] . ($isPreview ? ' (в процессе разработки)' : '');
                     ?>
                     <li>
-                        <a href="/index.php?cat=<?= e(rawurlencode($value['link'])); ?>">
+                        <a href="/<?= e(rawurlencode($value['link'])); ?>">
                             <img src="configurator/images/<?= e($value['image']); ?>" alt="">
                             <span><?= e($label); ?></span>
                         </a>

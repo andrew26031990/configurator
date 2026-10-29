@@ -77,7 +77,7 @@ $currentCat = isset($_GET['cat']) ? (string) $_GET['cat'] : '';
         <?php for ($i = 1; $i <= $totalPages; $i++) { ?>
             <?php if ($i !== $pageNo) { ?>
                 <li class="active">
-                    <a href="index.php?cat=<?= e(rawurlencode($currentCat)); ?>&amp;page=<?= $i; ?>"><?= $i; ?></a>
+                    <a href="/<?= e(rawurlencode($currentCat)); ?>?page=<?= $i; ?>"><?= $i; ?></a>
                 </li>
             <?php } else { ?>
                 <li class="disabled">

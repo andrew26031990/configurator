@@ -878,27 +878,51 @@ $('.androidShareBtn').click(function(e) {
   }
 });
 
+// База для ссылки на сборку: путь + (если есть) cat из query-строки, без хвоста
+// параметров товаров и без #-якоря. Работает и для ЧПУ (/play-profy, где cat
+// приходит с сервера через rewrite и в location.search его нет), и для старых
+// ссылок вида /index.php?cat=play-profy (там cat надо сохранить).
+function shareBaseUrl(){
+  var href = window.location.href.split('#')[0];
+  var qIndex = href.indexOf('?');
+  if (qIndex === -1) {
+    return href;
+  }
+  var path = href.substring(0, qIndex);
+  var parts = href.substring(qIndex + 1).split('&');
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].indexOf('cat=') === 0) {
+      return path + '?' + parts[i];
+    }
+  }
+  return path;
+}
+
+// Приклеивает собранные &-параметры к базе, сам подставляя '?' если его ещё нет.
+function appendShareParams(base, params){
+  if (!params) {
+    return base;
+  }
+  if (base.indexOf('?') === -1) {
+    return base + '?' + params.replace(/^&/, '');
+  }
+  return base + params;
+}
+
 function generateConfigToShare(){
   var generatedLink = "";
-  var link = window.location.href;
   $.each($("input[type=checkbox]:checked"), function () {
-    //alert($(this).closest('select').find(':selected').val());
     generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
   });
-  //alert(generatedLink);
-  var result = link.split('&')[0] + generatedLink;
-  return result.split('#').join('');
+  return appendShareParams(shareBaseUrl(), generatedLink);
 }
 
 function generateConfigToYaShare(){
   var generatedLink = "";
-  var link = window.location.href;
   $.each($("input[type=checkbox]:checked"), function () {
-    //alert($(this).closest().find('select').filter(':selected').val());
     generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
   });
-  var result = link.split('&')[0] + generatedLink;
-  $('.ya-share2').attr('data-url', result.split('#').join(''));
+  $('.ya-share2').attr('data-url', appendShareParams(shareBaseUrl(), generatedLink));
 }
 
 

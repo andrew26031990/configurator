@@ -633,6 +633,7 @@ $(document).ready(function() {
 
     $('#no_cat_table').DataTable({
         "lengthChange": true,
+        "columnDefs": [{ "orderable": false, "targets": [0, 6, 7] }]
     });
 
     $('#cat_filter_table').DataTable({
@@ -746,6 +747,105 @@ $(document).ready(function() {
                        loadNodeProducts(sel[0]);
                    } else {
                        window.location.reload();
+                   }
+               },
+               error: function (err) { alert(err.toString()); }
+           });
+       });
+
+       // ===== Массовые операции на странице "Товары без категории" =====
+       // Выбор сохраняется между страницами DataTables (ключ — id товара)
+       var noCatSelected = {}; // id -> image
+
+       function updateNoCatToolbar() {
+           var count = Object.keys(noCatSelected).length;
+           $('#noCatSelCount').text(count);
+           if (count > 0) {
+               $('#deleteSelectedNoCat, #deleteAllNoCat').show();
+           } else {
+               $('#deleteSelectedNoCat, #deleteAllNoCat').hide();
+           }
+       }
+
+       function updateNoCatSelectAllState() {
+           var $boxes = $('#no_cat_table tbody .no-cat-check');
+           var allChecked = $boxes.length > 0 && $boxes.filter(':checked').length === $boxes.length;
+           $('#no_cat_select_all').prop('checked', allChecked);
+       }
+
+       // При перерисовке таблицы (смена страницы/поиск) восстанавливаем галочки из сохранённого выбора
+       function restoreNoCatChecks() {
+           $('#no_cat_table tbody .no-cat-check').each(function () {
+               this.checked = noCatSelected.hasOwnProperty($(this).attr('data-id'));
+           });
+           updateNoCatSelectAllState();
+           updateNoCatToolbar();
+       }
+       $('#no_cat_table').on('draw.dt', restoreNoCatChecks);
+
+       // Отметка/снятие одного товара
+       $(document).on('change', '.no-cat-check', function () {
+           var id = $(this).attr('data-id');
+           var img = $(this).attr('data-img') || '';
+           if (this.checked) { noCatSelected[id] = img; } else { delete noCatSelected[id]; }
+           updateNoCatSelectAllState();
+           updateNoCatToolbar();
+       });
+
+       // Выбрать все на ТЕКУЩЕЙ странице (добавляется к ранее выбранным на других страницах)
+       $(document).on('change', '#no_cat_select_all', function () {
+           var checked = this.checked;
+           $('#no_cat_table tbody .no-cat-check').each(function () {
+               this.checked = checked;
+               var id = $(this).attr('data-id');
+               var img = $(this).attr('data-img') || '';
+               if (checked) { noCatSelected[id] = img; } else { delete noCatSelected[id]; }
+           });
+           updateNoCatToolbar();
+       });
+
+       // Удалить выбранные (со всех страниц)
+       $(document).on('click', '#deleteSelectedNoCat', function () {
+           var items = [];
+           for (var id in noCatSelected) {
+               if (noCatSelected.hasOwnProperty(id)) {
+                   items.push(id + ':' + (noCatSelected[id] || ''));
+               }
+           }
+           if (items.length === 0) { return; }
+           if (!confirm('Удалить выбранные товары (' + items.length + ' шт.)? Действие необратимо.')) { return; }
+           $.ajax({
+               url: "/modules/deleteProductsBulk.php",
+               type: "POST",
+               data: { items: items },
+               success: function (resp) {
+                   var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   alert('Удалено товаров: ' + (r.deleted || 0));
+                   window.location.reload();
+               },
+               error: function (err) { alert(err.toString()); }
+           });
+       });
+
+       // Удалить ВСЕ без категории — с защитой: нужно ввести "удалить все"
+       $(document).on('click', '#deleteAllNoCat', function () {
+           var phrase = prompt('Это удалит ВСЕ товары без категории безвозвратно.\nЧтобы подтвердить, введите: удалить все');
+           if (phrase === null) { return; }
+           if (phrase.trim().toLowerCase() !== 'удалить все') {
+               alert('Подтверждение не совпадает. Удаление отменено.');
+               return;
+           }
+           $.ajax({
+               url: "/modules/deleteAllNoCategory.php",
+               type: "POST",
+               data: { confirm: phrase },
+               success: function (resp) {
+                   var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   if (r.success) {
+                       alert('Удалено товаров без категории: ' + (r.deleted || 0));
+                       window.location.reload();
+                   } else {
+                       alert('Ошибка: ' + (r.error || 'не удалось удалить'));
                    }
                },
                error: function (err) { alert(err.toString()); }

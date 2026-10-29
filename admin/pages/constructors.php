@@ -20,8 +20,8 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
-                    <th>удалить</th>
-                    <th>редактировать</th>
+                    <th>Изменить</th>
+                    <th>Удалить</th>
                 </tr>
                 </thead>
                 <?php $sborki = getAllConstructors($mysqli);foreach ($sborki as $item){ ?>
@@ -45,10 +45,10 @@
                             <img src="/configurator/images/sborki/<?=$item['image']; ?>" style="height: 85px;" /><?/*=$item['image']; */?>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>:<?php echo $item['image']; ?>" type="button" class="btn btn-danger delete_sborka">Delete</button>
+                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Изменить</button>
                         </td>
                         <td>
-                            <button dataId="<?php echo $item['id']; ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Edit</button>
+                            <button dataId="<?php echo $item['id']; ?>:<?php echo $item['image']; ?>" type="button" class="btn btn-danger delete_sborka">Удалить</button>
                         </td>
                     </tr>
                 <?php } ?>
@@ -60,8 +60,8 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
-                    <th>удалить</th>
-                    <th>редактировать</th>
+                    <th>Изменить</th>
+                    <th>Удалить</th>
                 </tr>
                 </tfoot>
             </table>

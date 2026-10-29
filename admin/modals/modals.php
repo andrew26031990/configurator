@@ -13,6 +13,9 @@
 <!-- Modal Filter-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalFilter.php'); ?>
 <!--End Modal Filter-->
+<!-- Modal Edit Filter-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalEditFilter.php'); ?>
+<!--End Modal Edit Filter-->
 <!-- Modal Filter-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalEditSborka.php'); ?>
 <!--End Modal Filter-->

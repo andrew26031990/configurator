@@ -228,6 +228,17 @@ function getProductTreeIds($mysqli, $prod_id){
     return $ids;
 }
 
+// Массив tree_id (узлов типа товара), к которым привязан фильтр.
+function getFilterTreeIds($mysqli, $filter_id){
+    $filter_id = (int)$filter_id;
+    $ids = array();
+    $res = $mysqli->query("SELECT tree_id FROM `tree_filter` WHERE filter_id = $filter_id");
+    while($row = $res->fetch_assoc()){
+        $ids[] = (int)$row['tree_id'];
+    }
+    return $ids;
+}
+
 function getTreeFilterRelations($mysqli){ 
     $sql = "SELECT tf.id, (SELECT name from `tree` where link = t.group_id) as sborka, t.name, f.f_name, tf.tree_id, tf.filter_id FROM `tree_filter` as tf join `tree` as t on tf.tree_id = t.id join `filters` as f on tf.filter_id = f.id";
     $res = $mysqli->query($sql);

@@ -208,33 +208,41 @@ $(document).ready(function() {
 
     }));*/
 
-    $(".edit_filter").on('click',(function(e) {
-        e.preventDefault();
-        var f_name = prompt("Please enter your name", $(this).closest('tr').find("td:eq(1)").html().replace(/\s+/g,''));
-        var filter_id = $(this).attr("dataId");
-        if (f_name !== null) {
-          //alert(f_name);
-          $.ajax({
-            url: "../modules/editFilter.php",
-             type: "POST",
-             data:  {filter_id: filter_id, f_name: f_name},
-             beforeSend : function()
-             {
-              //alert('beforesend')
-             },
-             success: function(data)
-                {
-                    alert(data);
-                    window.location.reload();
-                },
-               error: function(e)
-                {
-                alert(e.toString());
-                   }
+    // Редактирование фильтра — модалка #editFilterModal с мультиселектом категорий
+    $(document).on('click', '.edit_filter', function () {
+        var id = $(this).attr('data-id') || ($(this).attr('dataId') || '').split(':')[0];
+        $.ajax({
+            url: "/modules/admin/getFilter.php",
+            type: "POST",
+            data: { filter_id: id },
+            success: function (resp) {
+                var f = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                if (!f) { return; }
+                $('#editFilter_id').val(f.id);
+                $('#editFilter input[name=f_name]').val(f.f_name);
+                $('#editFilter_trees option').prop('selected', false);
+                (f.trees || []).forEach(function (t) {
+                    $('#editFilter_trees option[value="' + t + '"]').prop('selected', true);
                 });
+                $('#editFilterModal').modal('show');
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
 
-          }
-    }));
+    $(document).on('submit', '#editFilter', function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: "/modules/editFilter.php",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function (data) {
+                alert(data);
+                window.location.reload();
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
 
     $('select').on('change',(function(e) {
         var type = $(this).attr('id');

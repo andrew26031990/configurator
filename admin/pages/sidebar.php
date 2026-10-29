@@ -19,11 +19,11 @@
                     </a>
                 </li>
 
-                <?php $componentViews = ['products','categories','filters','no_category','constructors','add_constructor']; ?>
+                <?php $componentViews = ['products','categories','no_category','constructors','add_constructor']; ?>
                 <li class="nav-item <?php echo in_array($view, $componentViews) ? 'menu-open' : ''; ?>">
                     <a href="#" class="nav-link <?php echo in_array($view, $componentViews) ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-microchip"></i>
-                        <p>Компоненты <i class="right fas fa-angle-left"></i></p>
+                        <p>Товары и сборки <i class="right fas fa-angle-left"></i></p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
@@ -37,11 +37,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Фильтры</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a href="admin.php?view=constructors" class="nav-link <?php echo in_array($view, ['constructors','add_constructor']) ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Все сборки</p>
                             </a>
@@ -49,28 +44,11 @@
                     </ul>
                 </li>
 
-                <li class="nav-item <?php echo in_array($view, ['addFilterToCat','deleteProdFromCat','deleteFilterFromCat']) ? 'menu-open' : ''; ?>">
-                    <a href="#" class="nav-link <?php echo in_array($view, ['addFilterToCat','deleteProdFromCat','deleteFilterFromCat']) ? 'active' : ''; ?>">
-                        <i class="nav-icon fas fa-link"></i>
-                        <p>Связи <i class="right fas fa-angle-left"></i></p>
+                <li class="nav-item">
+                    <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-filter"></i>
+                        <p>Фильтры</p>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="admin.php?view=addFilterToCat" class="nav-link <?php echo $view === 'addFilterToCat' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Добавление фильтра в категории</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="admin.php?view=deleteProdFromCat" class="nav-link <?php echo $view === 'deleteProdFromCat' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Удаление товара из категории</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="admin.php?view=deleteFilterFromCat" class="nav-link <?php echo $view === 'deleteFilterFromCat' ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i><p>Удаление фильтра из категории</p>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
 
                 <li class="nav-item <?php echo $view === 'logins' ? 'menu-open' : ''; ?>">

@@ -28,9 +28,11 @@
                 <h6 class="m-0 font-weight-bold text-primary">Товары выбранной категории</h6>
                 <div class="d-flex align-items-center ml-auto">
                     <span class="mr-3">Найдено: <span class="badge badge-primary" id="node_prod_count">0</span></span>
+                    <?php if (user_can('products.edit')) { ?>
                     <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#exampleModal">
                         <i class="fas fa-plus mr-1"></i> Добавить товар
                     </button>
+                    <?php } ?>
                 </div>
             </div>
             <div class="card-body">

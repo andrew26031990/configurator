@@ -28,7 +28,7 @@ $(document).ready(function() {
                 },
                error: function(e)
                 {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
                    }
                  });
 
@@ -56,7 +56,7 @@ $(document).ready(function() {
                 },
                 error: function(e)
                 {
-                    alert(e.toString());
+                    alert(e.responseText || ('Ошибка ' + e.status));
                 }
             });
 
@@ -83,7 +83,7 @@ $(document).ready(function() {
                 },
                error: function(e)
                 {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
                    }
                  });
 
@@ -111,7 +111,7 @@ $(document).ready(function() {
             },
            error: function(e)
             {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
                    }
                  });
         }
@@ -137,7 +137,7 @@ $(document).ready(function() {
                 },
                error: function(e)
                 {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
                    }
                  });
 
@@ -163,7 +163,7 @@ $(document).ready(function() {
                 });
                 $('#editFilterModal').modal('show');
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -177,7 +177,7 @@ $(document).ready(function() {
                 alert(data);
                 window.location.reload();
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -202,7 +202,7 @@ $(document).ready(function() {
                 if (obj.success) { $('#settingsCategoryModal').modal('hide'); }
                 else { alert('Ошибка сохранения: ' + (obj.error || '')); }
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     }));
 
@@ -240,7 +240,7 @@ $(document).ready(function() {
                     },
                    error: function(e)
                     {
-                        alert(e.toString());
+                        alert(e.responseText || ('Ошибка ' + e.status));
                     }
                   });
        }));
@@ -277,7 +277,7 @@ $(document).ready(function() {
             },
             error: function(e)
             {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
             }
         });
     }));
@@ -345,7 +345,7 @@ $(document).ready(function() {
             },
            error: function(e)
             {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
             }
           });
        }));
@@ -373,7 +373,7 @@ $(document).ready(function() {
             },
             error: function(e)
             {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
             }
         });
     }));
@@ -405,7 +405,7 @@ $(document).ready(function() {
             },
            error: function(e)
             {
-                alert(e.toString());
+                alert(e.responseText || ('Ошибка ' + e.status));
             }
           });
        }));
@@ -472,15 +472,19 @@ $(document).ready(function() {
                                    : '';
                            }},
                            { data: null, orderable: false, searchable: false, render: function (row) {
-                               return '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>';
+                               return (window.CAN && window.CAN['products.edit'])
+                                   ? '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>'
+                                   : '';
                            }},
                            { data: null, orderable: false, searchable: false, render: function (row) {
-                               return '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>';
+                               return (window.CAN && window.CAN['products.delete'])
+                                   ? '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>'
+                                   : '';
                            }}
                        ]
                    });
                },
-               error: function (err) { alert(err.toString()); }
+               error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
            });
        }
 
@@ -510,7 +514,7 @@ $(document).ready(function() {
                    });
                    $('#exampleModalEditProd').modal('show');
                },
-               error: function (err) { alert(err.toString()); }
+               error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
            });
        });
 
@@ -528,7 +532,7 @@ $(document).ready(function() {
                    if (sel && sel.length) { loadNodeProducts(sel[0]); }
                    else { window.location.reload(); }
                },
-               error: function (err) { alert(err.toString()); }
+               error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
            });
        });
 
@@ -568,7 +572,7 @@ $(document).ready(function() {
                                     },
                                    error: function(e)
                                     {
-                                        alert(e.toString());
+                                        alert(e.responseText || ('Ошибка ' + e.status));
                                        }
                                     });
                             }
@@ -599,7 +603,7 @@ $(document).ready(function() {
                                     },
                                    error: function(e)
                                     {
-                                        alert(e.toString());
+                                        alert(e.responseText || ('Ошибка ' + e.status));
                                        }
                                     });
                             }
@@ -633,7 +637,7 @@ $(document).ready(function() {
                                     },
                                    error: function(e)
                                     {
-                                        alert(e.toString());
+                                        alert(e.responseText || ('Ошибка ' + e.status));
                                        }
                                     });
                             }
@@ -703,7 +707,7 @@ $(document).ready(function() {
                                 $('#onLoadcountable').prop('checked', parseInt(s.onLoadcountable) === 1);
                                 $('#settingsCategoryModal').modal('show');
                             },
-                            error: function (err) { alert(err.toString()); }
+                            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
                         });
                     }
                 });
@@ -791,7 +795,7 @@ $(document).ready(function() {
                 alert('Удалено товаров: ' + (r.deleted || 0));
                 window.location.reload();
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -815,7 +819,7 @@ $(document).ready(function() {
                     alert('Ошибка: ' + (r.error || 'не удалось удалить'));
                 }
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -858,7 +862,7 @@ $(document).ready(function() {
                 $('#userIsActive').prop('checked', parseInt(r.is_active, 10) === 1);
                 $('#userModal').modal('show');
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -877,7 +881,7 @@ $(document).ready(function() {
                     alert(r && r.error ? r.error : 'Не удалось сохранить пользователя');
                 }
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 
@@ -898,7 +902,7 @@ $(document).ready(function() {
                     alert(r && r.error ? r.error : 'Не удалось удалить пользователя');
                 }
             },
-            error: function (err) { alert(err.toString()); }
+            error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
         });
     });
 

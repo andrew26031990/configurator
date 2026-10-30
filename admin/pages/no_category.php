@@ -5,12 +5,14 @@
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <span>Список товаров без категории</span>
         <div>
+            <?php if (user_can('products.delete')) { ?>
             <button type="button" id="deleteSelectedNoCat" class="btn btn-sm btn-danger mr-2" style="display:none;">
                 Удалить выбранные (<span id="noCatSelCount">0</span>)
             </button>
             <button type="button" id="deleteAllNoCat" class="btn btn-sm btn-outline-danger" style="display:none;">
                 Удалить все
             </button>
+            <?php } ?>
         </div>
     </div>
     <div class="card-body">
@@ -38,10 +40,14 @@
                         <td><?php echo e($item['f_name']); ?></td>
                         <td><img src="/configurator/images/products/<?php echo e($item['image']); ?>" class="zoomable-img" style="height: 60px;cursor:pointer;" /></td>
                         <td>
+                            <?php if (user_can('products.edit')) { ?>
                             <button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="<?php echo e($item['id']); ?>">Изменить</button>
+                            <?php } ?>
                         </td>
                         <td>
+                            <?php if (user_can('products.delete')) { ?>
                             <button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="<?php echo e($item['id']); ?>" data-img="<?php echo e($item['image']); ?>">Удалить</button>
+                            <?php } ?>
                         </td>
                     </tr>
                 <?php } ?>

@@ -691,6 +691,15 @@ $(document).ready(function() {
                     $('#tree').jstree('open_all');
                 });
 
+                // Без права управления деревом плагина contextmenu нет, поэтому
+                // правый клик показал бы нативное меню браузера — подавляем его.
+                // (У менеджера нативное меню перехватывает сам jstree.)
+                $('#tree').on('contextmenu', function (e) {
+                    if (!(window.CAN && window.CAN['categories.manage'])) {
+                        e.preventDefault();
+                    }
+                });
+
                 // Двойной клик по тип-ноде (level=3) -> модалка настроек с актуальными значениями
                 $('#tree').on('dblclick.jstree', '.jstree-anchor', function () {
                     // Настройки ноды — тоже управление деревом.

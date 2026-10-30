@@ -542,6 +542,10 @@ $(document).ready(function() {
 
 
        function customMenu(node) {
+            // Нет права управлять деревом категорий — контекстного меню нет.
+            if (!(window.CAN && window.CAN['categories.manage'])) {
+                return {};
+            }
             // The default set of all items
             var items = {
                 createItem: { // The "create" menu item
@@ -674,7 +678,9 @@ $(document).ready(function() {
                             'dataType' : 'json' // needed only if you do not supply JSON headers
                         }
                     },
-                    "plugins": [ "contextmenu", "unique", "dnd"],
+                    "plugins": (window.CAN && window.CAN['categories.manage'])
+                        ? [ "contextmenu", "unique", "dnd" ]
+                        : [ "unique" ],
                     "contextmenu": {items: customMenu}
                 }).on("select_node.jstree", function (e, data) {
 
@@ -687,6 +693,8 @@ $(document).ready(function() {
 
                 // Двойной клик по тип-ноде (level=3) -> модалка настроек с актуальными значениями
                 $('#tree').on('dblclick.jstree', '.jstree-anchor', function () {
+                    // Настройки ноды — тоже управление деревом.
+                    if (!(window.CAN && window.CAN['categories.manage'])) { return; }
                     var node = $('#tree').jstree(true).get_node(this);
                     // level-3 нода: предки [тип-родитель, группа, сборка, '#'] => length === 4
                     if (node && node.parents && node.parents.length === 4) {

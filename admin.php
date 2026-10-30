@@ -39,34 +39,31 @@ if (!current_user()) {
     exit();
 }
 
-// RBAC: какое право нужно для страницы. Нет права — на дашборд
-// (а если и дашборд недоступен — 403, чтобы не было петли редиректов).
+// RBAC: какое право нужно для страницы.
 $viewCapabilities = array(
     'dashboard'       => 'dashboard.view',
     'products'        => 'products.view',
     'categories'      => 'categories.manage',
     'no_category'     => 'products.view',
-    'filters'         => 'filters.manage',
-    'constructors'    => 'sborki.manage',
+    'filters'         => 'filters.view',
+    'constructors'    => 'sborki.view',
     'add_constructor' => 'sborki.manage',
     'logins'          => 'users.manage',
 );
 
 $needCap = isset($viewCapabilities[$view]) ? $viewCapabilities[$view] : null;
 
-if ($needCap !== null && !user_can($needCap)) {
-    if ($view === 'dashboard') {
-        http_response_code(403);
-        exit('Недостаточно прав');
-    }
-    header('Location: /admin');
-    exit();
-}
-
 $viewFile = __DIR__ . '/admin/pages/' . $view . '.php';
 
 if (!is_file($viewFile)) {
     $viewFile = __DIR__ . '/admin/pages/dashboard.php';
+}
+
+// Нет права на запрошенную страницу — показываем «Доступ запрещён» прямо
+// в админке (с кодом 403), а не молча редиректим на дашборд.
+if ($needCap !== null && !user_can($needCap)) {
+    http_response_code(403);
+    $viewFile = __DIR__ . '/admin/pages/denied.php';
 }
 ?>
 <!DOCTYPE html>

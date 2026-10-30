@@ -24,7 +24,7 @@
                 <?php
                 $componentViews = array('products', 'categories', 'no_category', 'constructors', 'add_constructor');
                 $canProducts = user_can('products.view');
-                $canSborki   = user_can('sborki.manage');
+                $canSborki   = user_can('sborki.view');
                 if ($canProducts || $canSborki) {
                 ?>
                 <li class="nav-item <?php echo in_array($view, $componentViews, true) ? 'menu-open' : ''; ?>">
@@ -56,7 +56,7 @@
                 </li>
                 <?php } ?>
 
-                <?php if (user_can('filters.manage')) { ?>
+                <?php if (user_can('filters.view')) { ?>
                 <li class="nav-item">
                     <a href="/admin/filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-filter"></i>

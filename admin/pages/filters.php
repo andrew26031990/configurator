@@ -2,7 +2,9 @@
 <!-- DataTales Example -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
+        <?php if (user_can('filters.manage')) { ?>
         <button type="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModalLabelFilter">Добавить фильтр</button>
+        <?php } ?>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -11,8 +13,10 @@
                 <tr>
                     <th>id</th>
                     <th>Название фильтра</th>
+                    <?php if (user_can('filters.manage')) { ?>
                     <th>Изменить</th>
                     <th>Удалить</th>
+                    <?php } ?>
                 </tr>
                 </thead>
                 <?php $filters = getAllFilters($mysqli); foreach ($filters as $item){ ?>
@@ -23,20 +27,24 @@
                         <td>
                             <?= e($item['f_name']); ?>
                         </td>
+                        <?php if (user_can('filters.manage')) { ?>
                         <td>
                             <button data-id="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_filter">Изменить</button>
                         </td>
                         <td>
                             <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-danger delete_filter">Удалить</button>
                         </td>
+                        <?php } ?>
                     </tr>
                 <?php } ?>
                 <tfoot>
                 <tr>
                     <th>id</th>
                     <th>Название фильтра</th>
+                    <?php if (user_can('filters.manage')) { ?>
                     <th>Изменить</th>
                     <th>Удалить</th>
+                    <?php } ?>
                 </tr>
                 </tfoot>
             </table>

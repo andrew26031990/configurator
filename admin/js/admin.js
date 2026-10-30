@@ -471,15 +471,11 @@ $(document).ready(function() {
                                    ? '<img src="/configurator/images/products/' + row.image + '" class="zoomable-img" style="height:50px;cursor:pointer;" />'
                                    : '';
                            }},
-                           { data: null, orderable: false, searchable: false, render: function (row) {
-                               return (window.CAN && window.CAN['products.edit'])
-                                   ? '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>'
-                                   : '';
+                           { data: null, orderable: false, searchable: false, visible: !!(window.CAN && window.CAN['products.edit']), render: function (row) {
+                               return '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>';
                            }},
-                           { data: null, orderable: false, searchable: false, render: function (row) {
-                               return (window.CAN && window.CAN['products.delete'])
-                                   ? '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>'
-                                   : '';
+                           { data: null, orderable: false, searchable: false, visible: !!(window.CAN && window.CAN['products.delete']), render: function (row) {
+                               return '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>';
                            }}
                        ]
                    });
@@ -730,7 +726,11 @@ $(document).ready(function() {
     // ===== Страница "Товары без категории": DataTable + массовое удаление =====
     $('#no_cat_table').DataTable({
         "lengthChange": true,
-        "columnDefs": [{ "orderable": false, "targets": [0, 5, 6, 7] }]
+        "columnDefs": [
+            { "orderable": false, "targets": [0, 5, 6, 7] },
+            { "visible": !!(window.CAN && window.CAN['products.edit']),   "targets": 6 },
+            { "visible": !!(window.CAN && window.CAN['products.delete']), "targets": 7 }
+        ]
     });
 
     // Выбор сохраняется между страницами DataTables (ключ — id товара)

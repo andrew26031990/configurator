@@ -1,8 +1,10 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0 text-gray-800">Сборки</h1>
+    <?php if (user_can('sborki.manage')) { ?>
     <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addSborkaModal">
         <i class="fas fa-plus mr-1"></i> Добавить сборку
     </button>
+    <?php } ?>
 </div>
 
 <div class="card shadow mb-4">
@@ -20,8 +22,10 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
+                    <?php if (user_can('sborki.manage')) { ?>
                     <th>Изменить</th>
                     <th>Удалить</th>
+                    <?php } ?>
                 </tr>
                 </thead>
                 <?php $sborki = getAllConstructors($mysqli);foreach ($sborki as $item){ ?>
@@ -44,12 +48,14 @@
                         <td>
                             <img src="/configurator/images/sborki/<?= e($item['image']); ?>" style="height: 85px;" />
                         </td>
+                        <?php if (user_can('sborki.manage')) { ?>
                         <td>
                             <button dataId="<?php echo e($item['id']); ?>" type="button" class="btn btn-info edit_sborka" data-toggle="modal" data-target="#exampleModalEditSborka">Изменить</button>
                         </td>
                         <td>
                             <button dataId="<?php echo e($item['id']); ?>:<?php echo e($item['image']); ?>" type="button" class="btn btn-danger delete_sborka">Удалить</button>
                         </td>
+                        <?php } ?>
                     </tr>
                 <?php } ?>
                 <tfoot>
@@ -60,8 +66,10 @@
                     <th>Цена сборки</th>
                     <th>Описание</th>
                     <th>Картинка</th>
+                    <?php if (user_can('sborki.manage')) { ?>
                     <th>Изменить</th>
                     <th>Удалить</th>
+                    <?php } ?>
                 </tr>
                 </tfoot>
             </table>

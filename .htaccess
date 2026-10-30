@@ -10,6 +10,16 @@ RewriteBase     /
 
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 
+# ЧПУ админки и входа. Должны стоять ВЫШЕ общего правила слагов,
+# иначе /login и /admin будут перехвачены как ?cat=.
+RewriteRule ^login$ login.php [L,QSA,NC]
+RewriteRule ^admin$ admin.php [L,QSA,NC]
+# /admin/<view> -> admin.php?view=<view>. Guard !-f/!-d, чтобы реальные
+# файлы и каталоги под /admin/ (vendor, js, css) отдавались напрямую.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/([\w-]+)$ admin.php?view=$1 [L,QSA,NC]
+
 # ЧПУ: /<slug> -> index.php?cat=<slug>
 # Слаг допускает буквы/цифры/подчёркивание и дефис (например play-profy).
 # Не перехватываем реально существующие файлы и каталоги (admin.php, assets и т.п.),

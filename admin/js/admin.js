@@ -270,7 +270,7 @@ $(document).ready(function() {
                     alert(data);
                 }else if(data == 'Сборка успешно добавлена в базу'){
                     alert(data);
-                    window.location = '/admin.php?view=constructors';
+                    window.location = '/admin/constructors';
                 }else{
                     alert(data);
                 }

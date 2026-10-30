@@ -4,13 +4,13 @@ require_once __DIR__ . '/functions.php';
 deny_framing();
 
 if (!is_admin()) {
-    header('Location: /login.php');
+    header('Location: /login');
     exit();
 }
 
 if (isset($_GET['view']) && $_GET['view'] === 'exit_cab') {
     exit_cab();
-    header('Location: /login.php');
+    header('Location: /login');
     exit();
 }
 
@@ -52,7 +52,7 @@ if (!is_file($viewFile)) {
     <script src="https://code.jquery.com/jquery-latest.min.js"></script>
 
     <!-- Font Awesome -->
-    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="/admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <!-- Google Font: Source Sans Pro (AdminLTE) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- AdminLTE 3 -->
@@ -60,7 +60,7 @@ if (!is_file($viewFile)) {
     <!-- jsTree -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
     <!-- DataTables (Bootstrap 4) -->
-    <link href="admin/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="/admin/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
 </head>
 

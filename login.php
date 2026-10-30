@@ -5,7 +5,7 @@ deny_framing();
 secure_session_start();
 
 if (is_admin()) {
-    header('Location: /admin.php');
+    header('Location: /admin');
     exit();
 }
 ?>
@@ -37,7 +37,7 @@ if (is_admin()) {
         <div class="card-body login-card-body">
             <p class="login-box-msg">Вход в панель управления</p>
 
-            <form class="user" id="loginform" action="login.php" method="post">
+            <form class="user" id="loginform" action="/login" method="post">
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" name="login" placeholder="Логин">
                     <div class="input-group-append">
@@ -85,7 +85,7 @@ if (is_admin()) {
                 data: $(this).serialize(),
                 success: function (data) {
                     if (data === 'Login') {
-                        window.location = '/admin.php';
+                        window.location = '/admin';
                     } else if (data === 'incorrectCaptcha') {
                         alert('Подтвердите, что вы не робот');
                         if (window.grecaptcha) { grecaptcha.reset(); }

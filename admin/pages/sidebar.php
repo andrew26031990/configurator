@@ -13,7 +13,7 @@
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
                 <li class="nav-item">
-                    <a href="/admin.php" class="nav-link <?php echo $view === 'dashboard' ? 'active' : ''; ?>">
+                    <a href="/admin" class="nav-link <?php echo $view === 'dashboard' ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <p>Dashboard</p>
                     </a>
@@ -27,17 +27,17 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="admin.php?view=products" class="nav-link <?php echo in_array($view, array('products', 'categories'), true) ? 'active' : ''; ?>">
+                            <a href="/admin/products" class="nav-link <?php echo in_array($view, array('products', 'categories'), true) ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Товары</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="admin.php?view=no_category" class="nav-link <?php echo $view === 'no_category' ? 'active' : ''; ?>">
+                            <a href="/admin/no_category" class="nav-link <?php echo $view === 'no_category' ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Товары без категории</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="admin.php?view=constructors" class="nav-link <?php echo in_array($view, array('constructors', 'add_constructor'), true) ? 'active' : ''; ?>">
+                            <a href="/admin/constructors" class="nav-link <?php echo in_array($view, array('constructors', 'add_constructor'), true) ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Все сборки</p>
                             </a>
                         </li>
@@ -45,7 +45,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="admin.php?view=filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
+                    <a href="/admin/filters" class="nav-link <?php echo $view === 'filters' ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-filter"></i>
                         <p>Фильтры</p>
                     </a>
@@ -58,7 +58,7 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="admin.php?view=logins" class="nav-link <?php echo $view === 'logins' ? 'active' : ''; ?>">
+                            <a href="/admin/logins" class="nav-link <?php echo $view === 'logins' ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Учетные записи</p>
                             </a>
                         </li>

@@ -23,28 +23,28 @@ foreach ($perBuild as $b) {
         <div class="small-box bg-info">
             <div class="inner"><h3><?php echo (int) $totalProducts; ?></h3><p>Всего товаров</p></div>
             <div class="icon"><i class="fas fa-box"></i></div>
-            <a href="admin.php?view=products" class="small-box-footer">К товарам <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="/admin/products" class="small-box-footer">К товарам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
     <div class="col-lg-3 col-6">
         <div class="small-box bg-success">
             <div class="inner"><h3><?php echo (int) $inCat; ?></h3><p>Разложено по категориям</p></div>
             <div class="icon"><i class="fas fa-sitemap"></i></div>
-            <a href="admin.php?view=products" class="small-box-footer">К товарам <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="/admin/products" class="small-box-footer">К товарам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning">
             <div class="inner"><h3><?php echo (int) $noCat; ?></h3><p>Без категории</p></div>
             <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <a href="admin.php?view=no_category" class="small-box-footer">Показать <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="/admin/no_category" class="small-box-footer">Показать <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
     <div class="col-lg-3 col-6">
         <div class="small-box bg-primary">
             <div class="inner"><h3><?php echo (int) $sborkiCount; ?></h3><p>Сборок</p></div>
             <div class="icon"><i class="fas fa-desktop"></i></div>
-            <a href="admin.php?view=constructors" class="small-box-footer">К сборкам <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="/admin/constructors" class="small-box-footer">К сборкам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
 </div>
@@ -54,7 +54,7 @@ foreach ($perBuild as $b) {
         <div class="small-box bg-secondary">
             <div class="inner"><h3><?php echo (int) $filtersCount; ?></h3><p>Фильтров</p></div>
             <div class="icon"><i class="fas fa-filter"></i></div>
-            <a href="admin.php?view=filters" class="small-box-footer">К фильтрам <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="/admin/filters" class="small-box-footer">К фильтрам <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
 </div>

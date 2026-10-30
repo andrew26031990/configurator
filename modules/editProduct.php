@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../functions.php';
 require_admin();
+require_capability('products.edit');
 
 // В старом коде здесь было '../images/products/' без configurator/,
 // из-за чего замена картинки товара молча не работала.

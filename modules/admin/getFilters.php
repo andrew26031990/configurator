@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../functions.php';
 require_admin();
+require_capability('products.view');
 
 $treeId = post_int('tree_id');
 

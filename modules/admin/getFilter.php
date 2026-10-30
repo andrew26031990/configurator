@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../functions.php';
 require_admin();
+require_capability('filters.manage');
 
 $id = post_int('filter_id');
 

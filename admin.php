@@ -30,6 +30,36 @@ if (!in_array($view, $allowedViews, true)) {
     $view = 'dashboard';
 }
 
+// Сессия протухла (старая, без user_id) или аккаунт деактивирован — на вход.
+if (!current_user()) {
+    header('Location: /login');
+    exit();
+}
+
+// RBAC: какое право нужно для страницы. Нет права — на дашборд
+// (а если и дашборд недоступен — 403, чтобы не было петли редиректов).
+$viewCapabilities = array(
+    'dashboard'       => 'dashboard.view',
+    'products'        => 'products.view',
+    'categories'      => 'categories.manage',
+    'no_category'     => 'products.view',
+    'filters'         => 'filters.manage',
+    'constructors'    => 'sborki.manage',
+    'add_constructor' => 'sborki.manage',
+    'logins'          => 'users.manage',
+);
+
+$needCap = isset($viewCapabilities[$view]) ? $viewCapabilities[$view] : null;
+
+if ($needCap !== null && !user_can($needCap)) {
+    if ($view === 'dashboard') {
+        http_response_code(403);
+        exit('Недостаточно прав');
+    }
+    header('Location: /admin');
+    exit();
+}
+
 $viewFile = __DIR__ . '/admin/pages/' . $view . '.php';
 
 if (!is_file($viewFile)) {

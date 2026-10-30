@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../functions.php';
 require_admin();
+require_capability('sborki.manage');
 
 $uploadDir = APP_ROOT . '/configurator/images/sborki';
 

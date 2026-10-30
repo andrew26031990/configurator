@@ -66,7 +66,9 @@ if ($login === '' || $password === '') {
     exit('False');
 }
 
-if (!CheckLoginPass($mysqli, $login, $password)) {
+$userId = CheckLoginPass($mysqli, $login, $password);
+
+if ($userId === false) {
     login_register_failure();
     exit('False');
 }
@@ -76,6 +78,8 @@ session_regenerate_id(true);
 
 login_reset_failures();
 
+// user_id — основа RBAC: по нему на каждый запрос перечитываются роли и права.
+$_SESSION['user_id']  = (int) $userId;
 $_SESSION['username'] = $login;
 
 echo 'Login';

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../functions.php';
 require_admin();
+require_capability('filters.manage');
 
 $name = post_str('filter', 200);
 

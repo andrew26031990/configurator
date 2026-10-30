@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/permissions.php';
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -509,7 +510,7 @@ function CheckLoginPass($mysqli, $login, $plainPassword)
 {
     $user = db_row(
         $mysqli,
-        'SELECT id, password FROM users WHERE username = ? LIMIT 1',
+        'SELECT id, password, is_active FROM users WHERE username = ? LIMIT 1',
         array((string) $login)
     );
 
@@ -541,18 +542,129 @@ function CheckLoginPass($mysqli, $login, $plainPassword)
         return false;
     }
 
+    // Отключённый аккаунт в систему не пускаем.
+    if ((int) $user['is_active'] !== 1) {
+        return false;
+    }
+
     db_exec(
         $mysqli,
         'UPDATE users SET last_login = ? WHERE id = ?',
         array(date('d.m.Y H:i:s'), (int) $user['id'])
     );
 
-    return true;
+    // Возвращаем id пользователя — он нужен для сессии (RBAC).
+    return (int) $user['id'];
 }
 
 function getAllUsers($mysqli)
 {
     return db_rows_by_id($mysqli, 'SELECT id, username, last_login FROM `users`');
+}
+
+/* ------------------------------------------------------------------ */
+/*  Пользователи и роли (RBAC)                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Список пользователей с ролями (через запятую) и статусом.
+ */
+function getAllUsersWithRoles($mysqli)
+{
+    return db_rows(
+        $mysqli,
+        "SELECT u.id, u.username, u.last_login, u.is_active,
+                COALESCE(GROUP_CONCAT(r.label ORDER BY r.id SEPARATOR ', '), '') AS roles
+           FROM users u
+           LEFT JOIN user_roles ur ON ur.user_id = u.id
+           LEFT JOIN roles r       ON r.id = ur.role_id
+          GROUP BY u.id, u.username, u.last_login, u.is_active
+          ORDER BY u.username"
+    );
+}
+
+/**
+ * Все роли (для чекбоксов в форме пользователя).
+ */
+function getAllRoles($mysqli)
+{
+    return db_rows($mysqli, 'SELECT id, name, label FROM roles ORDER BY id');
+}
+
+/**
+ * Один пользователь по id (без пароля).
+ *
+ * @return array<string,mixed>|null
+ */
+function getUserById($mysqli, $id)
+{
+    return db_row(
+        $mysqli,
+        'SELECT id, username, is_active FROM users WHERE id = ? LIMIT 1',
+        array((int) $id)
+    );
+}
+
+/**
+ * id ролей пользователя.
+ *
+ * @return array<int,int>
+ */
+function getUserRoleIds($mysqli, $id)
+{
+    $rows = db_rows($mysqli, 'SELECT role_id FROM user_roles WHERE user_id = ?', array((int) $id));
+    $out  = array();
+    foreach ($rows as $row) {
+        $out[] = (int) $row['role_id'];
+    }
+    return $out;
+}
+
+/**
+ * Занят ли логин (опционально исключая конкретный id — для редактирования).
+ */
+function usernameExists($mysqli, $username, $exceptId = 0)
+{
+    $row = db_row(
+        $mysqli,
+        'SELECT id FROM users WHERE username = ? AND id <> ? LIMIT 1',
+        array((string) $username, (int) $exceptId)
+    );
+    return (bool) $row;
+}
+
+/**
+ * Сколько активных пользователей имеют роль users.manage. Нужно, чтобы не
+ * оставить систему без единого администратора (защита от самоблокировки).
+ */
+function countActiveManagers($mysqli)
+{
+    return db_count(
+        $mysqli,
+        "SELECT COUNT(DISTINCT u.id)
+           FROM users u
+           JOIN user_roles ur       ON ur.user_id = u.id
+           JOIN role_permissions rp ON rp.role_id = ur.role_id
+           JOIN permissions p       ON p.id = rp.permission_id
+          WHERE u.is_active = 1 AND p.name = 'users.manage'"
+    );
+}
+
+/**
+ * Имеет ли пользователь право users.manage (через свои роли).
+ */
+function userHasManage($mysqli, $id)
+{
+    $n = db_count(
+        $mysqli,
+        "SELECT COUNT(*)
+           FROM user_roles ur
+           JOIN role_permissions rp ON rp.role_id = ur.role_id
+           JOIN permissions p       ON p.id = rp.permission_id
+          WHERE ur.user_id = ? AND p.name = 'users.manage'",
+        array((int) $id)
+    );
+    return $n > 0;
 }
 
 function exit_cab()

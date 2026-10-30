@@ -819,4 +819,87 @@ $(document).ready(function() {
         });
     });
 
+    /* ----- Управление пользователями (RBAC) ----------------------- */
+
+    // Открытие модалки на создание — сброс формы.
+    $(document).on('click', '#addUserBtn', function () {
+        var $f = $('#userForm');
+        $f[0].reset();
+        $('#userId').val(0);
+        $('#userModalLabel').text('Новый пользователь');
+        $('#userPasswordHint').text('Обязательно для нового пользователя.');
+        $('.user-role-cb').prop('checked', false);
+        $('#userIsActive').prop('checked', true);
+    });
+
+    // Редактирование — подтягиваем данные и открываем модалку.
+    $(document).on('click', '.edit_user', function () {
+        var id = $(this).attr('data-id');
+        $.ajax({
+            url: "/modules/admin/getUser.php",
+            type: "POST",
+            dataType: "json",
+            data: { id: id },
+            success: function (r) {
+                if (!r || !r.success) {
+                    alert(r && r.error ? r.error : 'Не удалось загрузить пользователя');
+                    return;
+                }
+                $('#userForm')[0].reset();
+                $('#userId').val(r.id);
+                $('#userUsername').val(r.username);
+                $('#userPassword').val('');
+                $('#userModalLabel').text('Редактирование пользователя');
+                $('#userPasswordHint').text('Оставьте пустым, чтобы не менять пароль.');
+                $('.user-role-cb').prop('checked', false);
+                $.each(r.roles || [], function (i, roleId) {
+                    $('#role_' + roleId).prop('checked', true);
+                });
+                $('#userIsActive').prop('checked', parseInt(r.is_active, 10) === 1);
+                $('#userModal').modal('show');
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
+
+    // Сохранение (создание/обновление).
+    $(document).on('submit', '#userForm', function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: "/modules/admin/saveUser.php",
+            type: "POST",
+            dataType: "json",
+            data: $(this).serialize(),
+            success: function (r) {
+                if (r && r.success) {
+                    window.location.reload();
+                } else {
+                    alert(r && r.error ? r.error : 'Не удалось сохранить пользователя');
+                }
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
+
+    // Удаление.
+    $(document).on('click', '.delete_user', function () {
+        var id = $(this).attr('data-id');
+        var username = $(this).attr('data-username') || '';
+        if (!confirm('Удалить пользователя «' + username + '»? Действие необратимо.')) { return; }
+        $.ajax({
+            url: "/modules/admin/deleteUser.php",
+            type: "POST",
+            dataType: "json",
+            data: { id: id },
+            success: function (r) {
+                if (r && r.success) {
+                    window.location.reload();
+                } else {
+                    alert(r && r.error ? r.error : 'Не удалось удалить пользователя');
+                }
+            },
+            error: function (err) { alert(err.toString()); }
+        });
+    });
+
 });

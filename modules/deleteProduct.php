@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../functions.php';
 require_admin();
+require_capability('products.delete');
 
 // admin.js присылает строку вида "<id>:<имя файла картинки>".
 $pieces = explode(':', post_str('prod_id', 300), 2);

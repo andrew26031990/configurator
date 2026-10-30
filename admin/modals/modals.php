@@ -25,3 +25,6 @@
 <!-- Add Sborka Modal-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalAddSborka.php'); ?>
 <!--End Add Sborka Modal-->
+<!-- User Modal-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalUser.php'); ?>
+<!--End User Modal-->

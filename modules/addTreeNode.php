@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../functions.php';
 require_once __DIR__ . '/strtr.php';
 require_admin();
+require_capability('categories.manage');
 
 $name     = post_str('name', 200);
 $parentId = post_int('parent_id');

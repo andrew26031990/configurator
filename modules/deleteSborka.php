@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../functions.php';
 require_admin();
+require_capability('sborki.manage');
 
 $pieces = explode(':', post_str('prod_id', 300), 2);
 $id     = filter_var($pieces[0], FILTER_VALIDATE_INT);

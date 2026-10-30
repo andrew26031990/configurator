@@ -1,10 +1,13 @@
 <?php
-require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/functions.php';
 
 deny_framing();
 secure_session_start();
 
-if (is_admin()) {
+// Уже авторизован (реальный активный пользователь) — на дашборд.
+// Проверяем current_user(), а не is_admin(): протухшая сессия (username без
+// user_id) иначе зациклила бы редирект login <-> admin.
+if (current_user()) {
     header('Location: /admin');
     exit();
 }

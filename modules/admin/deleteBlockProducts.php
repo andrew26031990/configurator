@@ -173,13 +173,23 @@ foreach ($images as $image) {
     delete_upload($uploadDir, $image);
 }
 
-audit_log($mysqli, 'block.bulk_delete', $treeId, array_merge($deleted, $unlinked), array(
-    'block'    => $block['name'],
-    'mode'     => $mode,
-    'deleted'  => $deleted,
-    'unlinked' => $unlinked,
-    'skipped'  => $skipped,
-));
+audit_log(
+    $mysqli,
+    'block.bulk_delete',
+    "Блок «{$block['name']}»: удалено " . count($deleted) . ', убрано из блока ' . count($unlinked)
+        . ', не удалено ' . count($skipped) . ($mode === 'all' ? ' (удаление всех)' : ''),
+    array(
+        'ids'     => array_merge($deleted, $unlinked),
+        'tree_id' => $treeId,
+        'details' => array(
+            'block'    => $block['name'],
+            'mode'     => $mode,
+            'deleted'  => $deleted,
+            'unlinked' => $unlinked,
+            'skipped'  => $skipped,
+        ),
+    )
+);
 
 $products = getBlockProducts($mysqli, $treeId);
 

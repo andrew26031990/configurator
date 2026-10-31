@@ -76,6 +76,11 @@ try {
     }
 
     $mysqli->commit();
+
+    audit_log($mysqli, 'product.create', "Добавлен товар «{$name}» (id {$prodId})", array(
+        'ids'     => array($prodId),
+        'details' => array('price' => $price, 'f_id' => $filterId, 'tree_ids' => $treeIds),
+    ));
     echo 'Товар успешно добавлен в базу, связь добавлена';
 } catch (Throwable $e) {
     $mysqli->rollback();

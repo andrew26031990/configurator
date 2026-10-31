@@ -56,6 +56,11 @@ try {
          VALUES (?, ?, ?, ?, ?, ?, ?)',
         array($title, $description, $price, $fileName, $link, $category, SBORKI_TREE_ID)
     );
+    $sborkaId = (int) $mysqli->insert_id;
+    audit_log($mysqli, 'sborka.create', "Добавлена сборка «{$title}» (id {$sborkaId})", array(
+        'ids'     => array($sborkaId),
+        'details' => array('price' => $price, 'category' => $category, 'link' => $link),
+    ));
     echo 'Сборка успешно добавлена в базу';
 } catch (Throwable $e) {
     delete_upload($uploadDir, $fileName);

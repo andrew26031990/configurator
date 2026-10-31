@@ -36,7 +36,15 @@ function deleteTreeNode($mysqli, $id, $depth = 0)
 }
 
 try {
+    $node = db_row($mysqli, 'SELECT name, level FROM tree WHERE id = ?', array($id));
     deleteTreeNode($mysqli, $id);
+    if ($node) {
+        audit_log($mysqli, 'node.delete', "Удалена категория «{$node['name']}» (id {$id}) вместе с подкатегориями", array(
+            'ids'     => array($id),
+            'tree_id' => $id,
+            'details' => array('level' => $node['level']),
+        ));
+    }
     echo 'Узел удалён';
 } catch (Throwable $e) {
     error_log('deleteNodes: ' . $e->getMessage());

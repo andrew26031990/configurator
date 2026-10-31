@@ -8,6 +8,7 @@ $uploadDir = APP_ROOT . '/configurator/images/products';
 // admin.js присылает items[] — каждый элемент "<id>:<имя файла картинки>".
 $items   = isset($_POST['items']) && is_array($_POST['items']) ? $_POST['items'] : array();
 $deleted = 0;
+$ids     = array();
 
 foreach ($items as $item) {
     if (!is_scalar($item)) {
@@ -31,9 +32,14 @@ foreach ($items as $item) {
         }
 
         $deleted++;
+        $ids[] = $id;
     } catch (Throwable $e) {
         error_log('deleteProductsBulk: ' . $e->getMessage());
     }
+}
+
+if ($ids) {
+    audit_log($mysqli, 'product.bulk_delete', "Удалено товаров без категории: {$deleted}", array('ids' => $ids));
 }
 
 json_out(array('deleted' => $deleted));

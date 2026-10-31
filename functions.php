@@ -766,33 +766,174 @@ function nextBlockSortOrder($mysqli, $treeId)
 /* ------------------------------------------------------------------ */
 
 /**
- * Пишет запись в admin_audit_log: кто, когда, что сделал, с какими id.
+ * Каталог действий журнала: код => [подпись, цвет бейджа].
+ *
+ * @return array<string,array{0:string,1:string}>
+ */
+function audit_actions()
+{
+    return array(
+        'auth.login'                  => array('Вход в админку', 'success'),
+        'auth.login_failed'           => array('Неудачный вход', 'warning'),
+        'auth.logout'                 => array('Выход', 'secondary'),
+        'product.create'              => array('Товар: добавление', 'success'),
+        'product.update'              => array('Товар: изменение', 'info'),
+        'product.delete'              => array('Товар: удаление', 'danger'),
+        'product.bulk_delete'         => array('Товары без категории: удаление', 'danger'),
+        'product.delete_all_no_cat'   => array('Товары без категории: удалены все', 'danger'),
+        'block.sort'                  => array('Блок: сортировка', 'primary'),
+        'block.bulk_delete'           => array('Блок: массовое удаление', 'danger'),
+        'filter.create'               => array('Фильтр: добавление', 'success'),
+        'filter.update'               => array('Фильтр: изменение', 'info'),
+        'filter.delete'               => array('Фильтр: удаление', 'danger'),
+        'node.create'                 => array('Категория: добавление', 'success'),
+        'node.rename'                 => array('Категория: переименование', 'info'),
+        'node.settings'               => array('Категория: настройки', 'info'),
+        'node.delete'                 => array('Категория: удаление', 'danger'),
+        'sborka.create'               => array('Сборка: добавление', 'success'),
+        'sborka.update'               => array('Сборка: изменение', 'info'),
+        'sborka.delete'               => array('Сборка: удаление', 'danger'),
+        'user.create'                 => array('Пользователь: создание', 'success'),
+        'user.update'                 => array('Пользователь: изменение', 'info'),
+        'user.delete'                 => array('Пользователь: удаление', 'danger'),
+    );
+}
+
+/**
+ * Пишет запись в admin_audit_log: кто, когда, что сделал и над чем.
+ *
+ * $ctx:
+ *   ids     — id затронутых объектов;
+ *   tree_id — блок/узел дерева, если действие к нему относится;
+ *   details — подробности (для изменений — 'changes' из audit_diff);
+ *   actor   — ['id' => ?int, 'username' => string] вместо текущего
+ *             пользователя (неудачный вход, когда сессии ещё нет).
  *
  * Ошибка записи журнала не должна ронять само действие — только error_log.
  *
- * @param array<int,int>      $itemIds
- * @param array<string,mixed> $details
+ * @param array<string,mixed> $ctx
  */
-function audit_log($mysqli, $action, $treeId, array $itemIds, array $details = array())
+function audit_log($mysqli, $action, $summary, array $ctx = array())
 {
-    $user = current_user();
+    $actor = isset($ctx['actor']) ? $ctx['actor'] : current_user();
+    $ids   = isset($ctx['ids']) ? array_values(array_map('intval', $ctx['ids'])) : array();
+
+    if (function_exists('mb_substr')) {
+        $summary = mb_substr((string) $summary, 0, 500, 'UTF-8');
+    }
 
     try {
         db_exec(
             $mysqli,
-            'INSERT INTO admin_audit_log (user_id, username, action, tree_id, item_ids, details, ip)
-             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO admin_audit_log (user_id, username, action, summary, tree_id, item_ids, details, ip)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             array(
-                $user ? (int) $user['id'] : null,
-                $user ? (string) $user['username'] : '',
+                $actor && isset($actor['id']) ? (int) $actor['id'] : null,
+                $actor ? (string) $actor['username'] : '',
                 (string) $action,
-                $treeId === null ? null : (int) $treeId,
-                json_encode(array_values($itemIds)),
-                json_encode($details, JSON_UNESCAPED_UNICODE),
+                (string) $summary,
+                isset($ctx['tree_id']) ? (int) $ctx['tree_id'] : null,
+                json_encode($ids),
+                isset($ctx['details']) ? json_encode($ctx['details'], JSON_UNESCAPED_UNICODE) : null,
                 isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '',
             )
         );
     } catch (Throwable $e) {
         error_log('audit_log: ' . $e->getMessage());
     }
+}
+
+/**
+ * Что поменялось: поле => ['было' => ..., 'стало' => ...] только для
+ * отличающихся значений. Сравнение строковое: из базы всё приходит строками.
+ *
+ * @param  array<string,mixed> $before
+ * @param  array<string,mixed> $after
+ * @return array<string,array<string,mixed>>
+ */
+function audit_diff(array $before, array $after)
+{
+    $changes = array();
+
+    foreach ($after as $field => $new) {
+        $old = array_key_exists($field, $before) ? $before[$field] : null;
+
+        $a = is_array($old) ? json_encode($old) : (string) $old;
+        $b = is_array($new) ? json_encode($new) : (string) $new;
+
+        if ($a !== $b) {
+            $changes[$field] = array('было' => $old, 'стало' => $new);
+        }
+    }
+
+    return $changes;
+}
+
+/**
+ * Записи журнала с фильтрами и пагинацией.
+ *
+ * $f: user_id, action, date_from, date_to (Y-m-d), q (поиск по описанию и логину).
+ *
+ * @param  array<string,mixed> $f
+ * @return array{rows: array<int,array<string,mixed>>, total: int}
+ */
+function getAuditLog($mysqli, array $f, $limit, $offset)
+{
+    $where  = array();
+    $params = array();
+
+    if (!empty($f['user_id'])) {
+        $where[]  = 'user_id = ?';
+        $params[] = (int) $f['user_id'];
+    }
+    if (!empty($f['action'])) {
+        $where[]  = 'action = ?';
+        $params[] = (string) $f['action'];
+    }
+    if (!empty($f['date_from'])) {
+        $where[]  = 'created_at >= ?';
+        $params[] = $f['date_from'] . ' 00:00:00';
+    }
+    if (!empty($f['date_to'])) {
+        $where[]  = 'created_at < DATE_ADD(?, INTERVAL 1 DAY)';
+        $params[] = (string) $f['date_to'];
+    }
+    if (isset($f['q']) && $f['q'] !== '') {
+        $like     = '%' . addcslashes((string) $f['q'], '%_\\') . '%';
+        $where[]  = '(summary LIKE ? OR username LIKE ? OR item_ids LIKE ?)';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    $sqlWhere = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $total = db_count($mysqli, "SELECT COUNT(*) FROM admin_audit_log {$sqlWhere}", $params);
+    $rows  = db_rows(
+        $mysqli,
+        "SELECT id, user_id, username, action, summary, tree_id, item_ids, details, ip, created_at
+           FROM admin_audit_log {$sqlWhere}
+          ORDER BY id DESC
+          LIMIT " . (int) $limit . ' OFFSET ' . (int) $offset,
+        $params
+    );
+
+    return array('rows' => $rows, 'total' => $total);
+}
+
+/**
+ * Логины, встречающиеся в журнале (включая удалённых пользователей) — для фильтра.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function getAuditUsers($mysqli)
+{
+    return db_rows(
+        $mysqli,
+        'SELECT user_id, MAX(username) AS username
+           FROM admin_audit_log
+          WHERE user_id IS NOT NULL
+          GROUP BY user_id
+          ORDER BY username'
+    );
 }

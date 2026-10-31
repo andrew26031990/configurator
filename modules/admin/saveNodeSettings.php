@@ -13,11 +13,22 @@ if ($treeId === null || $treeId <= 0) {
 }
 
 try {
+    $before = db_row($mysqli, 'SELECT name, uncheck_btn, onLoadcountable FROM tree WHERE id = ?', array($treeId));
     db_exec(
         $mysqli,
         'UPDATE tree SET uncheck_btn = ?, onLoadcountable = ? WHERE id = ?',
         array($uncheck, $onload, $treeId)
     );
+    if ($before) {
+        $changes = audit_diff($before, array('uncheck_btn' => $uncheck, 'onLoadcountable' => $onload));
+        if ($changes) {
+            audit_log($mysqli, 'node.settings', "Изменены настройки категории «{$before['name']}» (id {$treeId})", array(
+                'ids'     => array($treeId),
+                'tree_id' => $treeId,
+                'details' => array('changes' => $changes),
+            ));
+        }
+    }
     json_out(array('success' => true));
 } catch (Throwable $e) {
     error_log('saveNodeSettings: ' . $e->getMessage());

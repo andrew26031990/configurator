@@ -13,7 +13,14 @@ if ($id === false || $id <= 0) {
 }
 
 try {
+    $sborka = db_row($mysqli, 'SELECT title, price FROM sborki WHERE id = ?', array($id));
     db_exec($mysqli, 'DELETE FROM sborki WHERE id = ?', array($id));
+    if ($sborka) {
+        audit_log($mysqli, 'sborka.delete', "Удалена сборка «{$sborka['title']}» (id {$id})", array(
+            'ids'     => array($id),
+            'details' => array('price' => $sborka['price']),
+        ));
+    }
     delete_upload(APP_ROOT . '/configurator/images/sborki', $image);
     echo 'Сборка успешно удалена';
 } catch (Throwable $e) {

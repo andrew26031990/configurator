@@ -81,6 +81,15 @@
                 </li>
                 <?php } ?>
 
+                <?php if (user_can('audit.view')) { ?>
+                <li class="nav-item">
+                    <a href="/admin/audit" class="nav-link <?php echo $view === 'audit' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-history"></i>
+                        <p>Журнал действий</p>
+                    </a>
+                </li>
+                <?php } ?>
+
             </ul>
         </nav>
     </div>

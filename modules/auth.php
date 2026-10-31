@@ -70,6 +70,9 @@ $userId = CheckLoginPass($mysqli, $login, $password);
 
 if ($userId === false) {
     login_register_failure();
+    audit_log($mysqli, 'auth.login_failed', "Неудачная попытка входа под логином «{$login}»", array(
+        'actor' => array('id' => null, 'username' => $login),
+    ));
     exit('False');
 }
 
@@ -81,5 +84,9 @@ login_reset_failures();
 // user_id — основа RBAC: по нему на каждый запрос перечитываются роли и права.
 $_SESSION['user_id']  = (int) $userId;
 $_SESSION['username'] = $login;
+
+audit_log($mysqli, 'auth.login', 'Вход в админку', array(
+    'actor' => array('id' => (int) $userId, 'username' => $login),
+));
 
 echo 'Login';

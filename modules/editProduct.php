@@ -54,6 +54,30 @@ if ($id === null || $id <= 0 || $name === '' || $description === '' || $price <=
 
 $hasNewImage = isset($_FILES['picture']) && $_FILES['picture']['error'] === UPLOAD_ERR_OK;
 
+// Состояние до правки — для журнала действий.
+$before = db_row($mysqli, 'SELECT name, description, price, f_id FROM products WHERE id = ?', array($id));
+$before = $before ? $before : array();
+$before['tree_ids'] = getProductTreeIds($mysqli, $id);
+sort($before['tree_ids']);
+
+/**
+ * Запись в журнал: что поменялось в товаре.
+ */
+function auditProductUpdate($mysqli, $id, array $before, array $after, $imageChanged)
+{
+    sort($after['tree_ids']);
+    $changes = audit_diff($before, $after);
+    if ($imageChanged) {
+        $changes['image'] = array('было' => '', 'стало' => 'новая картинка');
+    }
+    audit_log($mysqli, 'product.update', "Изменён товар «{$after['name']}» (id {$id})", array(
+        'ids'     => array($id),
+        'details' => array('changes' => $changes),
+    ));
+}
+
+$after = array('name' => $name, 'description' => $description, 'price' => $price, 'f_id' => $filterId, 'tree_ids' => $treeIds);
+
 if (!$hasNewImage) {
     try {
         db_exec(
@@ -62,6 +86,7 @@ if (!$hasNewImage) {
             array($name, $description, $price, $filterId, $id)
         );
         syncProductTrees($mysqli, $id, $treeIds);
+        auditProductUpdate($mysqli, $id, $before, $after, false);
         echo 'Данные товара были успешно изменены';
     } catch (Throwable $e) {
         error_log('editProduct: ' . $e->getMessage());
@@ -109,6 +134,7 @@ try {
         delete_upload($uploadDir, $current['image']);
     }
 
+    auditProductUpdate($mysqli, $id, $before, $after, true);
     echo 'Товар был успешно отредактирован';
 } catch (Throwable $e) {
     delete_upload($uploadDir, $fileName);

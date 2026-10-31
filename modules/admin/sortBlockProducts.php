@@ -66,10 +66,15 @@ try {
     return;
 }
 
-audit_log($mysqli, 'block.sort', $treeId, $ordered, array(
-    'block' => $block['name'],
-    'reset' => $reset === '' ? null : $reset,
-));
+$resetLabels = array('price' => 'по цене', 'name' => 'по названию', 'id' => 'по ID');
+audit_log(
+    $mysqli,
+    'block.sort',
+    $reset === ''
+        ? "Изменён порядок товаров в блоке «{$block['name']}»"
+        : "Порядок товаров в блоке «{$block['name']}» сброшен {$resetLabels[$reset]}",
+    array('ids' => $ordered, 'tree_id' => $treeId, 'details' => array('block' => $block['name'], 'reset' => $reset === '' ? null : $reset))
+);
 
 $products = getBlockProducts($mysqli, $treeId);
 json_out(array('success' => true, 'count' => count($products), 'products' => $products));

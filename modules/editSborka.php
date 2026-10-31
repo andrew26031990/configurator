@@ -19,6 +19,30 @@ if ($id === null || $id <= 0 || $title === '' || $description === '' || $price <
 
 $hasNewImage = isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK;
 
+// Состояние до правки — для журнала действий.
+$before = db_row($mysqli, 'SELECT title, description, price, link, category FROM sborki WHERE id = ?', array($id));
+$before = $before ? $before : array();
+$after  = array('title' => $title, 'description' => $description, 'price' => $price, 'link' => $link, 'category' => $category);
+
+/**
+ * Запись в журнал: что поменялось в сборке.
+ */
+function auditSborkaUpdate($mysqli, $id, array $before, array $after, $imageChanged)
+{
+    // price в базе float: «1500000» и 1500000.0 не должны считаться правкой.
+    if (isset($before['price'])) {
+        $before['price'] = (float) $before['price'];
+    }
+    $changes = audit_diff($before, $after);
+    if ($imageChanged) {
+        $changes['image'] = array('было' => '', 'стало' => 'новая картинка');
+    }
+    audit_log($mysqli, 'sborka.update', "Изменена сборка «{$after['title']}» (id {$id})", array(
+        'ids'     => array($id),
+        'details' => array('changes' => $changes),
+    ));
+}
+
 if (!$hasNewImage) {
     try {
         db_exec(
@@ -26,6 +50,7 @@ if (!$hasNewImage) {
             'UPDATE sborki SET title = ?, description = ?, price = ?, link = ?, category = ? WHERE id = ?',
             array($title, $description, $price, $link, $category, $id)
         );
+        auditSborkaUpdate($mysqli, $id, $before, $after, false);
         echo 'Данные сборки были успешно изменены';
     } catch (Throwable $e) {
         error_log('editSborka: ' . $e->getMessage());
@@ -70,6 +95,7 @@ try {
         delete_upload($uploadDir, $current['image']);
     }
 
+    auditSborkaUpdate($mysqli, $id, $before, $after, true);
     echo 'Сборка была успешно отредактирована';
 } catch (Throwable $e) {
     delete_upload($uploadDir, $fileName);

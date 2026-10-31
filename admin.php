@@ -9,6 +9,9 @@ if (!is_admin()) {
 }
 
 if (isset($_GET['view']) && $_GET['view'] === 'exit_cab') {
+    if (current_user()) {
+        audit_log($mysqli, 'auth.logout', 'Выход из админки');
+    }
     exit_cab();
     header('Location: /login');
     exit();
@@ -23,7 +26,7 @@ $view = isset($_GET['view']) ? (string) $_GET['view'] : 'dashboard';
 // Явный белый список страниц админки — подключить произвольный .php через ?view нельзя.
 $allowedViews = array(
     'dashboard', 'products', 'categories', 'no_category',
-    'filters', 'constructors', 'add_constructor', 'logins',
+    'filters', 'constructors', 'add_constructor', 'logins', 'audit',
 );
 
 if (!in_array($view, $allowedViews, true)) {
@@ -49,6 +52,7 @@ $viewCapabilities = array(
     'constructors'    => 'sborki.view',
     'add_constructor' => 'sborki.manage',
     'logins'          => 'users.manage',
+    'audit'           => 'audit.view',
 );
 
 $needCap = isset($viewCapabilities[$view]) ? $viewCapabilities[$view] : null;

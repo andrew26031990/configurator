@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/permissions.php';
+require_once __DIR__ . '/block_sort.php';
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -244,7 +245,7 @@ function getAllProductsByTreeId($mysqli, $id)
            JOIN tree_prod tp ON t.id = tp.tree_id
            JOIN products  p  ON p.id = tp.prod_id
           WHERE tp.tree_id = ?
-          ORDER BY p.price',
+          ORDER BY tp.sort_order, p.price',
         array((int) $id)
     );
 }
@@ -672,5 +673,126 @@ function exit_cab()
     if (session_status() === PHP_SESSION_ACTIVE) {
         $_SESSION = array();
         session_destroy();
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Блоки (тип-ноды level 3) и их товары                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Блок — тип-нода дерева (level 3): к ним и только к ним привязаны товары.
+ *
+ * @return array<string,mixed>|null
+ */
+function getBlock($mysqli, $treeId)
+{
+    return db_row($mysqli, 'SELECT id, name, level FROM tree WHERE id = ? AND level = 3', array((int) $treeId));
+}
+
+/**
+ * Товары блока в порядке витрины.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function getBlockProducts($mysqli, $treeId)
+{
+    return db_rows(
+        $mysqli,
+        'SELECT p.id, p.name, p.price, p.image, f.f_name, tp.sort_order
+           FROM tree_prod tp
+           JOIN products p ON p.id = tp.prod_id
+           LEFT JOIN filters f ON f.id = p.f_id
+          WHERE tp.tree_id = ?
+          ORDER BY tp.sort_order, p.price, p.id',
+        array((int) $treeId)
+    );
+}
+
+/**
+ * id товаров блока в текущем порядке.
+ *
+ * @param  string $by  '' — текущий порядок; 'price' | 'name' | 'id' — сортировка по умолчанию
+ * @return array<int,int>
+ */
+function getBlockProductIds($mysqli, $treeId, $by = '')
+{
+    $orders = array(
+        ''      => 'tp.sort_order, p.price, p.id',
+        'price' => 'p.price, p.id',
+        'name'  => 'p.name, p.id',
+        'id'    => 'p.id',
+    );
+    $orderBy = isset($orders[$by]) ? $orders[$by] : $orders[''];
+
+    $ids = array();
+    foreach (db_rows(
+        $mysqli,
+        "SELECT p.id FROM tree_prod tp JOIN products p ON p.id = tp.prod_id
+          WHERE tp.tree_id = ? ORDER BY {$orderBy}",
+        array((int) $treeId)
+    ) as $r) {
+        $ids[] = (int) $r['id'];
+    }
+
+    return $ids;
+}
+
+/**
+ * Записывает порядок товаров блока: номера подряд 1..N по $orderedIds.
+ * Вызывать внутри транзакции.
+ */
+function saveBlockOrder($mysqli, $treeId, array $orderedIds)
+{
+    foreach (array_values($orderedIds) as $pos => $id) {
+        db_exec(
+            $mysqli,
+            'UPDATE tree_prod SET sort_order = ? WHERE tree_id = ? AND prod_id = ?',
+            array($pos + 1, (int) $treeId, (int) $id)
+        );
+    }
+}
+
+/**
+ * Следующий свободный номер в блоке — новый товар встаёт в конец.
+ */
+function nextBlockSortOrder($mysqli, $treeId)
+{
+    return db_count($mysqli, 'SELECT COALESCE(MAX(sort_order), 0) + 1 FROM tree_prod WHERE tree_id = ?', array((int) $treeId));
+}
+
+/* ------------------------------------------------------------------ */
+/*  Журнал действий админки                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Пишет запись в admin_audit_log: кто, когда, что сделал, с какими id.
+ *
+ * Ошибка записи журнала не должна ронять само действие — только error_log.
+ *
+ * @param array<int,int>      $itemIds
+ * @param array<string,mixed> $details
+ */
+function audit_log($mysqli, $action, $treeId, array $itemIds, array $details = array())
+{
+    $user = current_user();
+
+    try {
+        db_exec(
+            $mysqli,
+            'INSERT INTO admin_audit_log (user_id, username, action, tree_id, item_ids, details, ip)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            array(
+                $user ? (int) $user['id'] : null,
+                $user ? (string) $user['username'] : '',
+                (string) $action,
+                $treeId === null ? null : (int) $treeId,
+                json_encode(array_values($itemIds)),
+                json_encode($details, JSON_UNESCAPED_UNICODE),
+                isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '',
+            )
+        );
+    } catch (Throwable $e) {
+        error_log('audit_log: ' . $e->getMessage());
     }
 }

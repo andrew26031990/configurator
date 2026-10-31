@@ -27,6 +27,7 @@ if ($filterId !== '' && $filterId !== '0000') {
     $params[] = (int) $filterId;
 }
 
-$sql .= ' ORDER BY prod.price';
+// Порядок задаётся в админке (Категории → блок → «Порядок»).
+$sql .= ' ORDER BY tp.sort_order, prod.price';
 
 json_out(db_rows($mysqli, $sql, $params));

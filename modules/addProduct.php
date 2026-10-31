@@ -70,8 +70,8 @@ try {
     foreach ($treeIds as $tid) {
         db_exec(
             $mysqli,
-            'INSERT INTO `tree_prod` (`tree_id`, `prod_id`) VALUES (?, ?)',
-            array($tid, $prodId)
+            'INSERT INTO `tree_prod` (`tree_id`, `prod_id`, `sort_order`) VALUES (?, ?, ?)',
+            array($tid, $prodId, nextBlockSortOrder($mysqli, $tid))
         );
     }
 

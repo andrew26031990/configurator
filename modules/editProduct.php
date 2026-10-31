@@ -8,13 +8,23 @@ require_capability('products.edit');
 $uploadDir = APP_ROOT . '/configurator/images/products';
 
 /**
- * Перезаписывает связи товара со сборками/типами (tree_prod) по выбору из мультиселекта.
+ * Приводит связи товара со сборками/типами (tree_prod) к выбору из мультиселекта.
+ * Уже существующие связи не трогаем — иначе товар потерял бы место в блоке
+ * (sort_order); новые встают в конец блока.
  */
 function syncProductTrees($mysqli, $prodId, array $treeIds)
 {
-    db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ?', array((int) $prodId));
-    foreach ($treeIds as $tid) {
-        db_exec($mysqli, 'INSERT INTO tree_prod (tree_id, prod_id) VALUES (?, ?)', array((int) $tid, (int) $prodId));
+    $current = getProductTreeIds($mysqli, $prodId);
+
+    foreach (array_diff($current, $treeIds) as $tid) {
+        db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ? AND tree_id = ?', array((int) $prodId, (int) $tid));
+    }
+    foreach (array_diff($treeIds, $current) as $tid) {
+        db_exec(
+            $mysqli,
+            'INSERT INTO tree_prod (tree_id, prod_id, sort_order) VALUES (?, ?, ?)',
+            array((int) $tid, (int) $prodId, nextBlockSortOrder($mysqli, $tid))
+        );
     }
 }
 

@@ -10,6 +10,7 @@
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/permissions.php';
 require_once __DIR__ . '/block_sort.php';
+require_once __DIR__ . '/compat.php';
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -240,7 +241,7 @@ function getAllProductsByTreeId($mysqli, $id)
 {
     return db_rows_by_id(
         $mysqli,
-        'SELECT p.id, p.name, p.price, p.description, p.image
+        'SELECT p.id, p.name, p.price, p.description, p.image, p.socket, p.mem_type
            FROM tree t
            JOIN tree_prod tp ON t.id = tp.tree_id
            JOIN products  p  ON p.id = tp.prod_id
@@ -796,6 +797,8 @@ function audit_actions()
         'user.create'                 => array('Пользователь: создание', 'success'),
         'user.update'                 => array('Пользователь: изменение', 'info'),
         'user.delete'                 => array('Пользователь: удаление', 'danger'),
+        'product.compat'              => array('Товар: совместимость', 'info'),
+        'compat.autofill'             => array('Совместимость: автозаполнение', 'primary'),
     );
 }
 
@@ -936,4 +939,127 @@ function getAuditUsers($mysqli)
           GROUP BY user_id
           ORDER BY username'
     );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Совместимость (плата / процессор / ОЗУ)                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Товары блоков с ролью совместимости — для страницы «Совместимость».
+ * Товар может лежать в нескольких блоках (Intel/AMD) — берём одну строку на
+ * товар, роль — первая найденная.
+ *
+ * @param  string $role '' — все роли
+ * @return array<int,array<string,mixed>>
+ */
+function getCompatProducts($mysqli, $role = '')
+{
+    $params = array();
+    $where  = "t.compat_role <> ''";
+    if ($role !== '') {
+        $where   .= ' AND t.compat_role = ?';
+        $params[] = (string) $role;
+    }
+
+    return db_rows(
+        $mysqli,
+        "SELECT p.id, p.name, p.socket, p.mem_type,
+                MIN(t.compat_role) AS role,
+                GROUP_CONCAT(DISTINCT CONCAT(COALESCE((SELECT b.name FROM tree b WHERE b.link = t.group_id LIMIT 1), '?'), ' → ', t.name)
+                             ORDER BY t.id SEPARATOR '; ') AS blocks
+           FROM products p
+           JOIN tree_prod tp ON tp.prod_id = p.id
+           JOIN tree t       ON t.id = tp.tree_id
+          WHERE {$where}
+          GROUP BY p.id, p.name, p.socket, p.mem_type
+          ORDER BY role, p.name",
+        $params
+    );
+}
+
+/**
+ * Автозаполнение сокета и типа памяти по названиям товаров.
+ *
+ * Заполняются только пустые поля — ручные правки не перетираются.
+ * $apply = false — только отчёт, без записи.
+ *
+ * @return array{filled: array<int,array<string,mixed>>, unresolved: array<int,array<string,mixed>>}
+ */
+function compat_autofill($mysqli, $apply)
+{
+    $filled     = array();
+    $unresolved = array();
+
+    foreach (getCompatProducts($mysqli) as $p) {
+        $guess = compat_guess($p['name'], $p['role']);
+        $set   = array();
+
+        if ($p['socket'] === '' && $guess['socket'] !== '') {
+            $set['socket'] = $guess['socket'];
+        }
+        if ($p['mem_type'] === '' && $guess['mem_type'] !== '') {
+            $set['mem_type'] = $guess['mem_type'];
+        }
+
+        if ($set) {
+            if ($apply) {
+                $cols = array();
+                foreach (array_keys($set) as $c) {
+                    $cols[] = "{$c} = ?";
+                }
+                db_exec(
+                    $mysqli,
+                    'UPDATE products SET ' . implode(', ', $cols) . ' WHERE id = ?',
+                    array_merge(array_values($set), array((int) $p['id']))
+                );
+            }
+            $filled[] = array('id' => (int) $p['id'], 'name' => $p['name'], 'role' => $p['role'], 'set' => $set);
+        }
+
+        $socket = isset($set['socket']) ? $set['socket'] : $p['socket'];
+        $mem    = isset($set['mem_type']) ? $set['mem_type'] : $p['mem_type'];
+        $needSocket = $p['role'] !== 'ram';
+
+        if (($needSocket && $socket === '') || $mem === '') {
+            $unresolved[] = array(
+                'id'     => (int) $p['id'],
+                'name'   => $p['name'],
+                'role'   => $p['role'],
+                'blocks' => $p['blocks'],
+                'missing' => trim(($needSocket && $socket === '' ? 'сокет ' : '') . ($mem === '' ? 'тип памяти' : '')),
+            );
+        }
+    }
+
+    return array('filled' => $filled, 'unresolved' => $unresolved);
+}
+
+/**
+ * Заполняет пустые сокет/тип памяти одного товара по названию — вызывается
+ * после добавления и правки товара. Роль — по блокам, к которым он привязан.
+ */
+function compat_autofill_product($mysqli, $prodId)
+{
+    $p = db_row(
+        $mysqli,
+        "SELECT p.name, p.socket, p.mem_type, MIN(t.compat_role) AS role
+           FROM products p
+           JOIN tree_prod tp ON tp.prod_id = p.id
+           JOIN tree t ON t.id = tp.tree_id AND t.compat_role <> ''
+          WHERE p.id = ?
+          GROUP BY p.id, p.name, p.socket, p.mem_type",
+        array((int) $prodId)
+    );
+    if (!$p) {
+        return;
+    }
+
+    $guess  = compat_guess($p['name'], $p['role']);
+    $socket = $p['socket'] !== '' ? $p['socket'] : $guess['socket'];
+    $mem    = $p['mem_type'] !== '' ? $p['mem_type'] : $guess['mem_type'];
+
+    if ($socket !== $p['socket'] || $mem !== $p['mem_type']) {
+        db_exec($mysqli, 'UPDATE products SET socket = ?, mem_type = ? WHERE id = ?', array($socket, $mem, (int) $prodId));
+    }
 }

@@ -76,6 +76,7 @@ try {
     }
 
     $mysqli->commit();
+    compat_autofill_product($mysqli, $prodId);
 
     audit_log($mysqli, 'product.create', "Добавлен товар «{$name}» (id {$prodId})", array(
         'ids'     => array($prodId),

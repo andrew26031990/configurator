@@ -196,7 +196,7 @@ $(document).ready(function() {
         $.ajax({
             url: "/modules/admin/saveNodeSettings.php",
             type: "POST",
-            data: { tree_id: treeId, uncheck_btn: uncheck, onLoadcountable: onload },
+            data: { tree_id: treeId, uncheck_btn: uncheck, onLoadcountable: onload, compat_role: $('#compat_role').val() },
             success: function (resp) {
                 var obj = (typeof resp === 'string') ? JSON.parse(resp) : resp;
                 if (obj.success) { $('#settingsCategoryModal').modal('hide'); }
@@ -1011,6 +1011,7 @@ $(document).ready(function() {
                                 $('#settingsCategoryModalTitle').text('Настройки: ' + s.name);
                                 $('#uncheck_btn').prop('checked', parseInt(s.uncheck_btn) === 1);
                                 $('#onLoadcountable').prop('checked', parseInt(s.onLoadcountable) === 1);
+                                $('#compat_role').val(s.compat_role || '');
                                 $('#settingsCategoryModal').modal('show');
                             },
                             error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
@@ -1216,4 +1217,73 @@ $(document).ready(function() {
         });
     });
 
+});
+
+/* ----- Совместимость: сокет и тип памяти (страница /admin/compat) ----- */
+$(function () {
+    var $table = $('#compat_table');
+    if (!$table.length) { return; }
+
+    function rowMissing($tr) {
+        var noSocket = $tr.attr('data-role') !== 'ram' && !$tr.find('.compat-socket').val();
+        var noMem = $tr.find('.compat-mem:checked').length === 0;
+        // Без права правки полей нет — берём подсветку, выставленную сервером.
+        if (!$tr.find('.compat-mem').length) { return $tr.hasClass('compat-missing'); }
+        return noSocket || noMem;
+    }
+
+    var onlyMissing = false;
+    $.fn.dataTable.ext.search.push(function (settings, data, idx) {
+        if (settings.nTable !== $table[0] || !onlyMissing) { return true; }
+        return $(settings.aoData[idx].nTr).hasClass('compat-missing');
+    });
+
+    var dt = $table.DataTable({ pageLength: 50, lengthMenu: [[20, 50, 100, -1], [20, 50, 100, 'Все']], order: [[2, 'asc'], [1, 'asc']] });
+
+    $('#compatOnlyMissing').on('change', function () { onlyMissing = this.checked; dt.draw(); });
+
+    function updateMissingCount() {
+        var n = 0;
+        dt.rows().nodes().each(function (tr) { if ($(tr).hasClass('compat-missing')) { n++; } });
+        $('#compatMissingCount').text(n).toggleClass('badge-warning', n > 0).toggleClass('badge-success', n === 0);
+    }
+
+    // Сохраняем сразу при изменении поля
+    $table.on('change', '.compat-socket, .compat-mem', function () {
+        var $tr = $(this).closest('tr');
+        var mem = $tr.find('.compat-mem:checked').map(function () { return this.value; }).get();
+        var $ok = $tr.find('.compat-saved').hide();
+        $.ajax({
+            url: '/modules/admin/saveProductCompat.php',
+            type: 'POST',
+            data: { prod_id: $tr.attr('data-id'), socket: $tr.find('.compat-socket').val() || '', mem_type: mem },
+            success: function () {
+                $tr.toggleClass('compat-missing', rowMissing($tr));
+                updateMissingCount();
+                $ok.fadeIn(150).delay(1200).fadeOut(300);
+            },
+            error: function (err) {
+                var r = err.responseJSON || {};
+                alert(r.error || ('Ошибка ' + err.status));
+            }
+        });
+    });
+
+    $('#compatAutofill').on('click', function () {
+        if (!confirm('Заполнить сокет и тип памяти по названиям товаров?\nЗаполняются только пустые поля — ручные значения не меняются.')) { return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: '/modules/admin/compatAutofill.php',
+            type: 'POST',
+            success: function (r) {
+                alert('Заполнено товаров: ' + r.filled + '\nОсталось незаполненных: ' + r.unresolved);
+                window.location.reload();
+            },
+            error: function (err) {
+                var r = err.responseJSON || {};
+                alert(r.error || ('Ошибка ' + err.status));
+            },
+            complete: function () { $btn.prop('disabled', false); }
+        });
+    });
 });

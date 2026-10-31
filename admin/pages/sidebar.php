@@ -22,7 +22,7 @@
                 <?php } ?>
 
                 <?php
-                $componentViews = array('products', 'categories', 'no_category', 'constructors', 'add_constructor');
+                $componentViews = array('products', 'categories', 'no_category', 'compat', 'constructors', 'add_constructor');
                 $canProducts = user_can('products.view');
                 $canSborki   = user_can('sborki.view');
                 if ($canProducts || $canSborki) {
@@ -42,6 +42,11 @@
                         <li class="nav-item">
                             <a href="/admin/no_category" class="nav-link <?php echo $view === 'no_category' ? 'active' : ''; ?>">
                                 <i class="far fa-circle nav-icon"></i><p>Товары без категории</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/admin/compat" class="nav-link <?php echo $view === 'compat' ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i><p>Совместимость</p>
                             </a>
                         </li>
                         <?php } ?>

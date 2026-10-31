@@ -86,6 +86,7 @@ if (!$hasNewImage) {
             array($name, $description, $price, $filterId, $id)
         );
         syncProductTrees($mysqli, $id, $treeIds);
+        compat_autofill_product($mysqli, $id);
         auditProductUpdate($mysqli, $id, $before, $after, false);
         echo 'Данные товара были успешно изменены';
     } catch (Throwable $e) {
@@ -134,6 +135,7 @@ try {
         delete_upload($uploadDir, $current['image']);
     }
 
+    compat_autofill_product($mysqli, $id);
     auditProductUpdate($mysqli, $id, $before, $after, true);
     echo 'Товар был успешно отредактирован';
 } catch (Throwable $e) {

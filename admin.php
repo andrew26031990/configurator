@@ -26,7 +26,7 @@ $view = isset($_GET['view']) ? (string) $_GET['view'] : 'dashboard';
 // Явный белый список страниц админки — подключить произвольный .php через ?view нельзя.
 $allowedViews = array(
     'dashboard', 'products', 'categories', 'no_category',
-    'filters', 'constructors', 'add_constructor', 'logins', 'audit',
+    'filters', 'constructors', 'add_constructor', 'logins', 'audit', 'compat',
 );
 
 if (!in_array($view, $allowedViews, true)) {
@@ -53,6 +53,7 @@ $viewCapabilities = array(
     'add_constructor' => 'sborki.manage',
     'logins'          => 'users.manage',
     'audit'           => 'audit.view',
+    'compat'          => 'products.view',
 );
 
 $needCap = isset($viewCapabilities[$view]) ? $viewCapabilities[$view] : null;

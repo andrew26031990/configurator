@@ -3,6 +3,7 @@
 <script src="configurator/js/owl.carousel.min.js"></script>
 <script src="https://dimsemenov.com/plugins/magnific-popup/dist/jquery.magnific-popup.min.js?v=1.1.0"></script>
 <!--<script src="js/minibar.min.js"></script>-->
+<script src="configurator/js/compat.js?v=<?php echo @filemtime(__DIR__ . '/js/compat.js'); ?>"></script>
 <script src="configurator/js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/3.2.6/jquery.inputmask.bundle.min.js"></script>
@@ -55,6 +56,9 @@
                 //alert("Найдена: " + value);
                 let select_num = value.split('(').pop().split(')')[0];
                 let part_id = value.substr(0, value.indexOf('('));
+                // В блоке выбирается один товар: снимаем автовыбор при загрузке,
+                // иначе в сборке оставалось два товара и цена считалась за оба.
+                $( "#" + prop ).find("input[type=checkbox]").prop("checked", false);
                 $( "#" + prop ).find("#" + part_id).prop("checked", true);
                 $( "#" + prop ).find('.quantity option[value=' + select_num + ']').attr('selected','selected');
                 var image = $( "#" + prop ).find("#" + part_id).attr("data");
@@ -66,6 +70,7 @@
         calculatePlusMinusFromChecked();
         generateConfigForMultipleBlocksOnLoad();
         generateConfig();
+        if (window.Compat) { Compat.refresh(); }
     }
 
     function configLinkToEmail(){

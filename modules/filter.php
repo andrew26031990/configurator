@@ -14,7 +14,7 @@ if ($treeId === null || $treeId <= 0) {
     return;
 }
 
-$sql = 'SELECT prod.id, prod.name, prod.price, prod.image, prod.description
+$sql = 'SELECT prod.id, prod.name, prod.price, prod.image, prod.description, prod.socket, prod.mem_type
           FROM `products` AS prod
           JOIN `tree_prod` AS tp ON tp.prod_id = prod.id
          WHERE tp.tree_id = ?';

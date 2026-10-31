@@ -133,6 +133,7 @@ $(".list a").click(function () {
                                 <div class="product-block">
                                     <input type="checkbox" data="` +
               myObj[i].image +
+              `" data-socket="` + (myObj[i].socket || '') + `" data-mem="` + (myObj[i].mem_type || '') +
               `" id="` +
               myObj[i].id +
               `" name="` +
@@ -182,6 +183,7 @@ $(".list a").click(function () {
                                 <div class="product-block">
                                     <input type="checkbox" data="` +
               myObj[i].image +
+              `" data-socket="` + (myObj[i].socket || '') + `" data-mem="` + (myObj[i].mem_type || '') +
               `" id="` +
               myObj[i].id +
               `" name="` +
@@ -222,6 +224,7 @@ $(".list a").click(function () {
         }
         resetCustomBlock(component);
       }
+      if (window.Compat) { Compat.refresh(); }
     },
   });
 });
@@ -743,9 +746,15 @@ function generateConfiguration(){
     //alert(randNum);
 
     if($('.scrollbar-inner table:eq(' + i + ')').hasClass('countable')){
-      $('.scrollbar-inner table:eq(' + i + ') input:checkbox:eq(0)').prop('checked', true);
+      var $inputs = $('.scrollbar-inner table:eq(' + i + ') input:checkbox');
+      // Плата/процессор/ОЗУ — первый товар, совместимый с уже выбранными выше.
+      var $pick = (window.Compat && $('.scrollbar-inner table:eq(' + i + ')').attr('data-compat-role'))
+        ? Compat.firstCompatible($inputs)
+        : $inputs.eq(0);
+      $pick.prop('checked', true);
     }
   }
+  if (window.Compat) { Compat.refresh(); }
   setImageOnLoad();
   generateConfigForMultipleBlocksOnLoad();
   calculatePlusMinusFromCheckedForultipleBlocksOnLoad();

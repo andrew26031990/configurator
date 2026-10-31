@@ -33,7 +33,8 @@ $fieldLabels = array(
     'description' => 'Описание', 'price' => 'Цена', 'f_id' => 'Фильтр (id)', 'tree_ids' => 'Категории (id)',
     'image' => 'Картинка', 'link' => 'Ссылка', 'category' => 'Категория', 'is_active' => 'Активен',
     'roles' => 'Роли', 'password' => 'Пароль', 'uncheck_btn' => 'Кнопка «Убрать»',
-    'onLoadcountable' => 'Автодобавление в сборку',
+    'onLoadcountable' => 'Автодобавление в сборку', 'compat_role' => 'Роль совместимости',
+    'socket' => 'Сокет', 'mem_type' => 'Тип памяти',
 );
 
 /**

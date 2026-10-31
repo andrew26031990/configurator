@@ -12,6 +12,6 @@ if ($treeId === null || $treeId <= 0) {
 
 json_out(db_row(
     $mysqli,
-    'SELECT id, name, uncheck_btn, onLoadcountable FROM tree WHERE id = ?',
+    'SELECT id, name, uncheck_btn, onLoadcountable, compat_role FROM tree WHERE id = ?',
     array($treeId)
 ));

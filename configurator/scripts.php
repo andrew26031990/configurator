@@ -3,6 +3,8 @@
 <script src="configurator/js/owl.carousel.min.js"></script>
 <script src="https://dimsemenov.com/plugins/magnific-popup/dist/jquery.magnific-popup.min.js?v=1.1.0"></script>
 <!--<script src="js/minibar.min.js"></script>-->
+<script>window.PCM_CAT = <?php echo json_encode(isset($_GET['cat']) && is_scalar($_GET['cat']) ? (string) $_GET['cat'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
+<script src="configurator/js/analytics.js?v=<?php echo @filemtime(__DIR__ . '/js/analytics.js'); ?>"></script>
 <script src="configurator/js/compat.js?v=<?php echo @filemtime(__DIR__ . '/js/compat.js'); ?>"></script>
 <script src="configurator/js/main.js?v=<?php echo @filemtime(__DIR__ . '/js/main.js'); ?>"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
@@ -89,6 +91,7 @@
             generatedLink += "&" + $(this).attr("name") + "=" + $(this).attr("id") + "(" + $(this).parent('.product-block').find('.quantity :selected').val() + ")";
         });
         generatedLink += '&p=' + p;
+        if (window.Analytics) { Analytics.track('share_link'); }
         navigator.clipboard.writeText(appendShareParams(shareBaseUrl(), generatedLink))
             .then(() => {
                 alert("Ссылка на сборку скопирована");
@@ -112,6 +115,7 @@
         if (list.length === 0){
             alert('Вы не выбрали ни одного элемента')
         }else{
+            if (window.Analytics) { Analytics.track('pdf_download'); }
             var url = "/configurator/pdf.php";
             var requestURL = '';
             $.ajax({

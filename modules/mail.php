@@ -38,6 +38,11 @@ function order_reject($reason, $status, $message, $silent = false)
         exit(ORDER_OK_MESSAGE);
     }
 
+    // В статистику — только то, что видит живой покупатель (ловушки для ботов не считаем).
+    if ($reason !== 'method') {
+        analytics_record(db(), 'order_error', post_str('cat', 64), $reason);
+    }
+
     http_response_code($status);
     exit($message);
 }
@@ -178,5 +183,7 @@ SendOrderMail(array(
     'amount'     => $amount,
     'sborkaLink' => $sborkaLink,
 ));
+
+analytics_record($mysqli, 'order_success', post_str('cat', 64));
 
 echo ORDER_OK_MESSAGE;

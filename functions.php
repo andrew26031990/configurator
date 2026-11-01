@@ -12,6 +12,7 @@ require_once __DIR__ . '/permissions.php';
 require_once __DIR__ . '/order.php';
 require_once __DIR__ . '/block_sort.php';
 require_once __DIR__ . '/compat.php';
+require_once __DIR__ . '/analytics.php';
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -1118,4 +1119,261 @@ function compat_autofill_product($mysqli, $prodId)
     if ($socket !== $p['socket'] || $mem !== $p['mem_type']) {
         db_exec($mysqli, 'UPDATE products SET socket = ?, mem_type = ? WHERE id = ?', array($socket, $mem, (int) $prodId));
     }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Статистика посещаемости и воронка                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Записывает событие витрины.
+ *
+ * Посетитель и сессия — из cookie pcm_vid / pcm_sid, которые ставит
+ * configurator/js/analytics.js. Нет cookie — значит, JS не выполнялся (бот),
+ * событие не пишем. Роботов по User-Agent и самих админов тоже не считаем.
+ *
+ * @param  array<string,mixed> $extra is_new, referrer
+ * @return bool записано ли событие
+ */
+function analytics_record($mysqli, $event, $cat = '', $detail = '', array $extra = array())
+{
+    $vid = isset($_COOKIE['pcm_vid']) ? (string) $_COOKIE['pcm_vid'] : '';
+    $sid = isset($_COOKIE['pcm_sid']) ? (string) $_COOKIE['pcm_sid'] : '';
+    $ua  = isset($_SERVER['HTTP_USER_AGENT']) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+
+    if (!analytics_id_ok($vid) || !analytics_id_ok($sid) || analytics_is_bot($ua)) {
+        return false;
+    }
+
+    // Админ, зашедший на витрину, — не посетитель. Сессию не заводим, если её нет.
+    if (!empty($_COOKIE[session_name()]) && is_admin()) {
+        return false;
+    }
+
+    try {
+        // Страховка от накрутки: не больше 500 событий на сессию.
+        if (db_count($mysqli, 'SELECT COUNT(*) FROM analytics_events WHERE session_id = ?', array($sid)) >= 500) {
+            return false;
+        }
+
+        db_exec(
+            $mysqli,
+            'INSERT INTO analytics_events (day, visitor_id, session_id, event, cat, detail, device, is_new, referrer)
+             VALUES (CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?)',
+            array(
+                $vid,
+                $sid,
+                (string) $event,
+                analytics_clean_token($cat, 64),
+                analytics_clean_token($detail, 100),
+                analytics_device($ua),
+                !empty($extra['is_new']) ? 1 : 0,
+                isset($extra['referrer']) ? substr((string) $extra['referrer'], 0, 64) : '',
+            )
+        );
+        return true;
+    } catch (Throwable $e) {
+        error_log('analytics_record: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * WHERE для отчёта: период, конфигуратор, устройство.
+ *
+ * @param  array<string,string> $f from, to (Y-m-d), cat, device
+ * @return array{0:string,1:array<int,mixed>}
+ */
+function analytics_where(array $f)
+{
+    $where  = array('day BETWEEN ? AND ?');
+    $params = array($f['from'], $f['to']);
+
+    if (!empty($f['cat'])) {
+        $where[]  = 'cat = ?';
+        $params[] = $f['cat'];
+    }
+    if (!empty($f['device'])) {
+        $where[]  = 'device = ?';
+        $params[] = $f['device'];
+    }
+
+    return array('WHERE ' . implode(' AND ', $where), $params);
+}
+
+/**
+ * Итоги за период.
+ *
+ * @return array<string,int>
+ */
+function getAnalyticsTotals($mysqli, array $f)
+{
+    list($w, $p) = analytics_where($f);
+    $row = db_row(
+        $mysqli,
+        "SELECT COUNT(DISTINCT visitor_id) AS visitors,
+                COUNT(DISTINCT session_id) AS sessions,
+                COUNT(DISTINCT CASE WHEN is_new = 1 THEN visitor_id END) AS new_visitors,
+                SUM(event = 'page_view') AS page_views,
+                SUM(event = 'order_success') AS orders
+           FROM analytics_events {$w}",
+        $p
+    );
+    $out = array();
+    foreach (array('visitors', 'sessions', 'new_visitors', 'page_views', 'orders') as $k) {
+        $out[$k] = $row ? (int) $row[$k] : 0;
+    }
+    return $out;
+}
+
+/**
+ * По дням: посетители, сессии, заявки. Дни без событий — нулями.
+ *
+ * @return array<string,array<string,int>> 'Y-m-d' => [...]
+ */
+function getAnalyticsDaily($mysqli, array $f)
+{
+    list($w, $p) = analytics_where($f);
+    $rows = db_rows(
+        $mysqli,
+        "SELECT day,
+                COUNT(DISTINCT visitor_id) AS visitors,
+                COUNT(DISTINCT session_id) AS sessions,
+                SUM(event = 'order_success') AS orders
+           FROM analytics_events {$w}
+          GROUP BY day",
+        $p
+    );
+    $byDay = array();
+    foreach ($rows as $r) {
+        $byDay[$r['day']] = $r;
+    }
+
+    $out = array();
+    for ($t = strtotime($f['from']); $t <= strtotime($f['to']); $t = strtotime('+1 day', $t)) {
+        $d = date('Y-m-d', $t);
+        $out[$d] = array(
+            'visitors' => isset($byDay[$d]) ? (int) $byDay[$d]['visitors'] : 0,
+            'sessions' => isset($byDay[$d]) ? (int) $byDay[$d]['sessions'] : 0,
+            'orders'   => isset($byDay[$d]) ? (int) $byDay[$d]['orders'] : 0,
+        );
+    }
+    return $out;
+}
+
+/**
+ * По месяцам за последние $months месяцев (с учётом фильтров конфигуратора и устройства).
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function getAnalyticsMonthly($mysqli, array $f, $months = 12)
+{
+    $range = $f;
+    $range['from'] = date('Y-m-01', strtotime('-' . ((int) $months - 1) . ' months', strtotime(date('Y-m-01'))));
+    $range['to']   = date('Y-m-d');
+    list($w, $p) = analytics_where($range);
+
+    return db_rows(
+        $mysqli,
+        "SELECT DATE_FORMAT(day, '%Y-%m') AS month,
+                COUNT(DISTINCT visitor_id) AS visitors,
+                COUNT(DISTINCT session_id) AS sessions,
+                COUNT(DISTINCT CASE WHEN is_new = 1 THEN visitor_id END) AS new_visitors,
+                SUM(event = 'order_success') AS orders
+           FROM analytics_events {$w}
+          GROUP BY month
+          ORDER BY month DESC",
+        $p
+    );
+}
+
+/**
+ * Воронка: для каждой сессии — максимальный шаг (analytics_event_step), затем analytics_funnel().
+ * Плюс «где бросили сборку»: последний блок, в котором выбирали товар, у сессий,
+ * которые начали собирать (шаг 3–4), но до формы заказа не дошли.
+ *
+ * @return array{funnel: array<int,array<string,mixed>>, abandon: array<string,int>}
+ */
+function getAnalyticsFunnel($mysqli, array $f)
+{
+    list($w, $p) = analytics_where($f);
+    $rows = db_rows(
+        $mysqli,
+        "SELECT session_id, event, cat, detail FROM analytics_events {$w} ORDER BY id",
+        $p
+    );
+
+    $maxStep   = array();
+    $lastBlock = array();
+    foreach ($rows as $r) {
+        $sid  = $r['session_id'];
+        $step = analytics_event_step($r['event'], $r['cat']);
+        if (!isset($maxStep[$sid]) || $step > $maxStep[$sid]) {
+            $maxStep[$sid] = $step;
+        }
+        if ($r['event'] === 'component_select' && $r['detail'] !== '') {
+            $lastBlock[$sid] = $r['detail'];
+        }
+    }
+
+    $byStep = array();
+    foreach ($maxStep as $step) {
+        if ($step > 0) {
+            $byStep[$step] = (isset($byStep[$step]) ? $byStep[$step] : 0) + 1;
+        }
+    }
+
+    $abandon = array();
+    foreach ($maxStep as $sid => $step) {
+        if (($step === 3 || $step === 4) && isset($lastBlock[$sid])) {
+            $abandon[$lastBlock[$sid]] = (isset($abandon[$lastBlock[$sid]]) ? $abandon[$lastBlock[$sid]] : 0) + 1;
+        }
+    }
+    arsort($abandon);
+
+    return array('funnel' => analytics_funnel($byStep), 'abandon' => $abandon);
+}
+
+/**
+ * Число сессий по значению поля для события: источники, устройства, ошибки формы, блоки.
+ *
+ * @param  string $field detail | referrer | device | cat
+ * @return array<string,int>
+ */
+function getAnalyticsBreakdown($mysqli, array $f, $event, $field, $onlyDetail = null)
+{
+    if (!in_array($field, array('detail', 'referrer', 'device', 'cat'), true)) {
+        return array();
+    }
+    list($w, $p) = analytics_where($f);
+    $w .= ' AND event = ?';
+    $p[] = (string) $event;
+    if ($onlyDetail !== null) {
+        $w .= ' AND detail = ?';
+        $p[] = (string) $onlyDetail;
+    }
+
+    $out = array();
+    foreach (db_rows(
+        $mysqli,
+        "SELECT {$field} AS k, COUNT(DISTINCT session_id) AS n FROM analytics_events {$w} GROUP BY {$field} ORDER BY n DESC LIMIT 20",
+        $p
+    ) as $r) {
+        $out[(string) $r['k']] = (int) $r['n'];
+    }
+    return $out;
+}
+
+/**
+ * Названия блоков по translit (для отчёта «где бросили сборку»).
+ *
+ * @return array<string,string>
+ */
+function getBlockNamesByTranslit($mysqli)
+{
+    $out = array();
+    foreach (db_rows($mysqli, "SELECT translit, MIN(name) AS name FROM tree WHERE level = 3 AND translit <> '' GROUP BY translit") as $r) {
+        $out[$r['translit']] = trim($r['name']);
+    }
+    return $out;
 }

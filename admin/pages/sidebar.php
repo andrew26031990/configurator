@@ -86,6 +86,15 @@
                 </li>
                 <?php } ?>
 
+                <?php if (user_can('stats.view')) { ?>
+                <li class="nav-item">
+                    <a href="/admin/stats" class="nav-link <?php echo $view === 'stats' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Статистика</p>
+                    </a>
+                </li>
+                <?php } ?>
+
                 <?php if (user_can('audit.view')) { ?>
                 <li class="nav-item">
                     <a href="/admin/audit" class="nav-link <?php echo $view === 'audit' ? 'active' : ''; ?>">

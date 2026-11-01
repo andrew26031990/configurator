@@ -54,7 +54,25 @@ $("html select").on("change", function (e) {
   collectQuantityFromEachSelectedInput();
 });
 
+// Статистика: первый выбор в блоке за сессию и момент, когда собрана основа —
+// выбраны материнская плата, процессор и ОЗУ (блоки с ролью совместимости).
+// Правило формы «не меньше четверти блоков» не подходит: часть блоков отмечается
+// автоматически при загрузке, и оно выполняется почти с первого клика.
+function analyticsOnSelect(input) {
+  if (!window.Analytics || !input.checked) { return; }
+  Analytics.once('sel_' + input.name, 'component_select', input.name);
+  var $core = $('table.product-table[data-compat-role]');
+  if ($core.length && $core.filter(function () { return $(this).find('input[type=checkbox]:checked').length > 0; }).length === $core.length) {
+    Analytics.once('ready', 'build_ready');
+  }
+}
+
+$(document).on("click", 'a.popup[href="#modal_2"]', function () {
+  if (window.Analytics) { Analytics.once('open', 'order_open'); }
+});
+
 $(document).on("change", "input[type=checkbox]", function () {
+  analyticsOnSelect(this);
   $("input[type=checkbox][name=" + this.name + "]").not(this).prop('checked', false);
   var id = $(this).closest("table").attr("id");
   var bd_id = $(this).attr("id");
@@ -285,16 +303,19 @@ $("#modal_2 button[type=submit]").click(function (e) {
   var countRadiosChecked = $(":checkbox:checked").length;
   var countRadiosUnchecked = $('.scrollbar-inner').length;
   if (name === "" || phone === "" || email === "") {
+    if (window.Analytics) { Analytics.track('order_error', 'client_fields'); }
     alert("Не все поля заполнены");
   } else {
     if(countRadiosChecked >= Math.floor(countRadiosUnchecked/4)){
+      if (window.Analytics) { Analytics.track('order_submit'); }
       $.ajax({
         url: "../../modules/mail.php",
         type: "POST",
         // Состав и сумму сервер берёт из sborkaLink по базе; order_token и website — защита от ботов.
         data: {
           name: name, phone: phone, email: email, sborka: sborka, sborkaLink: sborkaLink,
-          order_token: $("#modal_2 #order_token").val(), website: $("#modal_2 #website").val()
+          order_token: $("#modal_2 #order_token").val(), website: $("#modal_2 #website").val(),
+          cat: window.PCM_CAT || ''
         },
         beforeSend: function() {
           $("#modal_2 button[type=submit]").prop("disabled", true);
@@ -311,6 +332,7 @@ $("#modal_2 button[type=submit]").click(function (e) {
         },
       });
     }else{
+      if (window.Analytics) { Analytics.track('order_error', 'client_components'); }
       alert("Количество выбранных элементов " + countRadiosChecked + " недостаточно для заказа. Необходимо выбрать минимум 4 компонента для сборки");
     }
   }

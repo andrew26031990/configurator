@@ -53,6 +53,29 @@ if ($id > 0 && !getUserById($mysqli, $id)) {
     return;
 }
 
+/**
+ * Пользователь в виде для журнала: логин, статус, роли (по названию).
+ */
+function auditUserState($mysqli, $userId)
+{
+    $u = db_row($mysqli, 'SELECT username, is_active FROM users WHERE id = ?', array((int) $userId));
+    if (!$u) {
+        return array();
+    }
+    $roles = array();
+    foreach (db_rows(
+        $mysqli,
+        'SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? ORDER BY r.name',
+        array((int) $userId)
+    ) as $r) {
+        $roles[] = $r['name'];
+    }
+    return array('username' => $u['username'], 'is_active' => $u['is_active'], 'roles' => $roles);
+}
+
+$isNew  = $id === 0;
+$before = $isNew ? array() : auditUserState($mysqli, $id);
+
 $mysqli->begin_transaction();
 
 try {
@@ -99,6 +122,18 @@ try {
     }
 
     $mysqli->commit();
+
+    $after   = auditUserState($mysqli, $id);
+    $changes = audit_diff($before, $after);
+    if (!$isNew && $password !== '') {
+        $changes['password'] = array('было' => '***', 'стало' => 'изменён');
+    }
+    audit_log(
+        $mysqli,
+        $isNew ? 'user.create' : 'user.update',
+        ($isNew ? 'Создан пользователь «' : 'Изменён пользователь «') . $username . "» (id {$id})",
+        array('ids' => array($id), 'details' => $isNew ? array('user' => $after) : array('changes' => $changes))
+    );
     json_out(array('success' => true, 'id' => $id));
 } catch (Throwable $e) {
     $mysqli->rollback();

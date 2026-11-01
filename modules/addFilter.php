@@ -32,6 +32,10 @@ try {
     }
 
     $mysqli->commit();
+    audit_log($mysqli, 'filter.create', "Добавлен фильтр «{$name}» (id {$filterId})", array(
+        'ids'     => array($filterId),
+        'details' => array('tree_ids' => $trees),
+    ));
     echo 'Фильтр успешно добавлен в базу';
 } catch (Throwable $e) {
     $mysqli->rollback();

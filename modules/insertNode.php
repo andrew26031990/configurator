@@ -35,6 +35,12 @@ try {
          VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)',
         array('', $name, $parentId, $level, $groupId, $link, $translit)
     );
+    $nodeId = (int) $mysqli->insert_id;
+    audit_log($mysqli, 'node.create', "Добавлена категория «{$name}» (id {$nodeId}, уровень {$level})", array(
+        'ids'     => array($nodeId),
+        'tree_id' => $nodeId,
+        'details' => array('parent_id' => $parentId, 'level' => $level),
+    ));
     echo 'Узел добавлен';
 } catch (Throwable $e) {
     error_log('insertNode: ' . $e->getMessage());

@@ -24,6 +24,12 @@ try {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         array($name, $parentId, $level, $slug, $slug, '', $sort, $enabled ? 1 : 0)
     );
+    $nodeId = (int) $mysqli->insert_id;
+    audit_log($mysqli, 'node.create', "Добавлена категория «{$name}» (id {$nodeId}, уровень {$level})", array(
+        'ids'     => array($nodeId),
+        'tree_id' => $nodeId,
+        'details' => array('parent_id' => $parentId, 'level' => $level),
+    ));
     echo 'Узел ' . $level . ' уровня успешно записан в базу';
 } catch (Throwable $e) {
     error_log('addTreeNode: ' . $e->getMessage());

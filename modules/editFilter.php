@@ -23,6 +23,10 @@ if ($id === null || $id <= 0 || $name === '') {
 }
 
 try {
+    $old    = db_row($mysqli, 'SELECT f_name FROM filters WHERE id = ?', array($id));
+    $before = array('f_name' => $old ? $old['f_name'] : null, 'tree_ids' => getFilterTreeIds($mysqli, $id));
+    sort($before['tree_ids']);
+
     db_exec($mysqli, 'UPDATE filters SET f_name = ? WHERE id = ?', array($name, $id));
 
     // Пересинхронизация связей фильтр↔категория
@@ -31,6 +35,12 @@ try {
         db_exec($mysqli, 'INSERT INTO tree_filter (tree_id, filter_id) VALUES (?, ?)', array($tid, $id));
     }
 
+    $after = array('f_name' => $name, 'tree_ids' => $trees);
+    sort($after['tree_ids']);
+    audit_log($mysqli, 'filter.update', "Изменён фильтр «{$name}» (id {$id})", array(
+        'ids'     => array($id),
+        'details' => array('changes' => audit_diff($before, $after)),
+    ));
     echo 'Название фильтра обновлено';
 } catch (Throwable $e) {
     error_log('editFilter: ' . $e->getMessage());

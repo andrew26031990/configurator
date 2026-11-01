@@ -16,6 +16,7 @@ if ($norm !== 'удалить все') {
 
 $rows    = getProductsWithoutCategory($mysqli);
 $deleted = 0;
+$ids     = array();
 
 foreach ($rows as $row) {
     $id = (int) $row['id'];
@@ -33,9 +34,14 @@ foreach ($rows as $row) {
         }
 
         $deleted++;
+        $ids[] = $id;
     } catch (Throwable $e) {
         error_log('deleteAllNoCategory: ' . $e->getMessage());
     }
+}
+
+if ($ids) {
+    audit_log($mysqli, 'product.delete_all_no_cat', "Удалены все товары без категории: {$deleted}", array('ids' => $ids));
 }
 
 json_out(array('success' => true, 'deleted' => $deleted));

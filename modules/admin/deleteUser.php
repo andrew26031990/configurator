@@ -23,7 +23,7 @@ if ($me && (int) $me['id'] === $id) {
     return;
 }
 
-if (!getUserById($mysqli, $id)) {
+if (!($deletedUser = getUserById($mysqli, $id))) {
     json_out(array('success' => false, 'error' => 'Пользователь не найден'));
     return;
 }
@@ -43,6 +43,7 @@ try {
     }
 
     $mysqli->commit();
+    audit_log($mysqli, 'user.delete', "Удалён пользователь «{$deletedUser['username']}» (id {$id})", array('ids' => array($id)));
     json_out(array('success' => true));
 } catch (Throwable $e) {
     $mysqli->rollback();

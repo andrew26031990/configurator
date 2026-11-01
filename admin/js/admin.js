@@ -196,7 +196,7 @@ $(document).ready(function() {
         $.ajax({
             url: "/modules/admin/saveNodeSettings.php",
             type: "POST",
-            data: { tree_id: treeId, uncheck_btn: uncheck, onLoadcountable: onload },
+            data: { tree_id: treeId, uncheck_btn: uncheck, onLoadcountable: onload, compat_role: $('#compat_role').val() },
             success: function (resp) {
                 var obj = (typeof resp === 'string') ? JSON.parse(resp) : resp;
                 if (obj.success) { $('#settingsCategoryModal').modal('hide'); }
@@ -450,6 +450,136 @@ $(document).ready(function() {
         }
     });
 
+       /* ----- Товары выбранной ноды; для блока — сортировка и массовое удаление ----- */
+
+       // Колонки #node_products_table
+       var COL_CHECK = 0, COL_DRAG = 1, COL_ID = 2, COL_NAME = 3, COL_ORDER = 4;
+
+       var block = {
+           treeId: null,     // выбранная нода
+           isBlock: false,   // нода — блок (тип товара, level 3)
+           name: '',
+           rows: [],         // товары в текущем (возможно, несохранённом) порядке
+           selected: {},     // id -> true, переживает пагинацию
+           dirty: false,     // есть несохранённый порядок
+           busy: false       // идёт запрос — повторные клики игнорируем
+       };
+       var blockSortable = null;
+
+       function escHtml(s) {
+           return String(s === null || s === undefined ? '' : s)
+               .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+               .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+       }
+
+       function canEdit()   { return !!(window.CAN && window.CAN['products.edit']); }
+       function canDelete() { return !!(window.CAN && window.CAN['products.delete']); }
+
+       function setSortStatus(text, cls) {
+           $('#blockSortStatus').attr('class', 'small mr-3 mb-1 ' + (cls || 'text-muted')).html(text);
+       }
+
+       function setDirty(dirty) {
+           block.dirty = dirty;
+           $('#applyBlockSort').prop('disabled', !dirty || block.busy);
+           if (dirty) { setSortStatus('<i class="fas fa-circle text-warning"></i> Есть несохранённые изменения порядка', 'text-warning'); }
+       }
+
+       function updateBlockSelection() {
+           var count = Object.keys(block.selected).length;
+           $('#blockSelCount').text(count);
+           $('#blockDeleteSelected').prop('disabled', count === 0 || block.busy);
+       }
+
+       function nodeTable() { return $('#node_products_table').DataTable(); }
+
+       // Перетаскивать можно только в «естественном» виде: сортировка по «Порядку» ↑ и пустой поиск,
+       // иначе порядок строк на экране не совпадает с порядком в блоке.
+       function isNaturalOrder() {
+           var t = nodeTable(), o = t.order();
+           return o.length === 1 && o[0][0] === COL_ORDER && o[0][1] === 'asc' && t.search() === '';
+       }
+
+       function refreshDragState() {
+           if (!blockSortable) { return; }
+           var on = block.isBlock && canEdit() && isNaturalOrder() && !block.busy;
+           blockSortable.option('disabled', !on);
+           $('#node_products_table .block-drag').toggleClass('disabled', !on);
+       }
+
+       function restoreBlockChecks() {
+           $('#node_products_table tbody .block-check').each(function () {
+               this.checked = block.selected.hasOwnProperty($(this).attr('data-id'));
+           });
+           var $boxes = $('#node_products_table tbody .block-check');
+           $('#block_select_all').prop('checked', $boxes.length > 0 && $boxes.filter(':checked').length === $boxes.length);
+           updateBlockSelection();
+           refreshDragState();
+       }
+
+       function renderNodeTable() {
+           var isBlock = block.isBlock;
+           $('#node_products_table').DataTable({
+               destroy: true, paging: true, searching: true,
+               data: block.rows,
+               pageLength: isBlock ? 50 : 10,
+               lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'Все']],
+               order: [[isBlock ? COL_ORDER : COL_ID, 'asc']],
+               columns: [
+                   { data: null, orderable: false, searchable: false, visible: isBlock && canDelete(), render: function (row) {
+                       return '<input type="checkbox" class="block-check" data-id="' + row.id + '" />';
+                   }},
+                   { data: null, orderable: false, searchable: false, visible: isBlock && canEdit(), render: function () {
+                       return '<i class="fas fa-grip-vertical block-drag" title="Перетащить"></i>';
+                   }},
+                   { data: 'id' },
+                   { data: 'name', render: function (d, type) { return type === 'display' ? escHtml(d) : d; } },
+                   { data: 'sort_order', visible: isBlock, searchable: false, type: 'num', render: function (d, type, row) {
+                       if (type !== 'display') { return parseInt(d, 10) || 0; }
+                       if (!canEdit()) { return escHtml(d); }
+                       return '<input type="number" min="1" step="1" class="form-control form-control-sm block-sort-input" data-id="' + row.id + '" value="' + escHtml(d) + '" />';
+                   }},
+                   { data: 'price' },
+                   { data: 'f_name', render: function (d) { return d ? escHtml(d) : ''; } },
+                   { data: null, orderable: false, searchable: false, render: function (row) {
+                       return row.image
+                           ? '<img src="/configurator/images/products/' + escHtml(row.image) + '" class="zoomable-img" style="height:50px;cursor:pointer;" />'
+                           : '';
+                   }},
+                   { data: null, orderable: false, searchable: false, visible: canEdit(), render: function (row) {
+                       return '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>';
+                   }},
+                   { data: null, orderable: false, searchable: false, visible: canDelete(), render: function (row) {
+                       return '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + escHtml(row.image || '') + '">Удалить</button>';
+                   }}
+               ],
+               rowCallback: function (tr, row) { $(tr).attr('data-id', row.id); }
+           });
+
+           if (!blockSortable && window.Sortable) {
+               blockSortable = Sortable.create($('#node_products_table tbody')[0], {
+                   handle: '.block-drag',
+                   animation: 150,
+                   onEnd: onBlockDragEnd
+               });
+           }
+           restoreBlockChecks();
+       }
+
+       // Применяем ответ сервера со списком товаров
+       function applyNodeData(obj) {
+           block.rows = obj.products || [];
+           block.isBlock = !!obj.block;
+           $('#node_prod_count').text(obj.count);
+           $('#blockToolbar').toggle(block.isBlock);
+           // Выбор держим только по товарам, которые ещё есть в списке
+           var ids = {};
+           block.rows.forEach(function (r) { ids[r.id] = true; });
+           Object.keys(block.selected).forEach(function (id) { if (!ids[id]) { delete block.selected[id]; } });
+           setDirty(false);
+           renderNodeTable();
+       }
+
        function loadNodeProducts(treeId) {
            $.ajax({
                url: "/modules/admin/getProductsByNode.php",
@@ -457,35 +587,198 @@ $(document).ready(function() {
                data: { tree_id: treeId },
                success: function (resp) {
                    var obj = (typeof resp === 'string') ? JSON.parse(resp) : resp;
-                   $('#node_prod_count').text(obj.count);
-                   $('#node_products_table').DataTable({
-                       destroy: true, paging: true, searching: true,
-                       data: obj.products,
-                       columns: [
-                           { data: 'id' },
-                           { data: 'name' },
-                           { data: 'price' },
-                           { data: 'f_name', render: function (d) { return d ? d : ''; } },
-                           { data: null, orderable: false, searchable: false, render: function (row) {
-                               return row.image
-                                   ? '<img src="/configurator/images/products/' + row.image + '" class="zoomable-img" style="height:50px;cursor:pointer;" />'
-                                   : '';
-                           }},
-                           { data: null, orderable: false, searchable: false, visible: !!(window.CAN && window.CAN['products.edit']), render: function (row) {
-                               return '<button type="button" class="btn btn-sm btn-info edit_prod_cat" data-id="' + row.id + '">Изменить</button>';
-                           }},
-                           { data: null, orderable: false, searchable: false, visible: !!(window.CAN && window.CAN['products.delete']), render: function (row) {
-                               return '<button type="button" class="btn btn-sm btn-danger delete_prod_cat" data-id="' + row.id + '" data-img="' + (row.image || '') + '">Удалить</button>';
-                           }}
-                       ]
-                   });
+                   applyNodeData(obj);
                },
                error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
            });
        }
 
        $('#tree').on("select_node.jstree", function (e, data) {
+           if (String(data.node.id) === String(block.treeId)) { return; }
+           if (block.dirty && !confirm('Порядок в блоке «' + block.name + '» не сохранён. Перейти без сохранения?')) {
+               data.instance.deselect_node(data.node, true);
+               data.instance.select_node(block.treeId, true);
+               return;
+           }
+           block.treeId = data.node.id;
+           block.name = data.node.text;
+           block.selected = {};
+           $('#blockName').text(block.name);
+           $('#blockResult').empty();
+           setSortStatus('');
            loadNodeProducts(data.node.id);
+       });
+
+       // Перетаскивание: переставили строки на текущей странице — переносим это
+       // в общий список блока и перенумеровываем 1..N.
+       function onBlockDragEnd(evt) {
+           if (evt.oldIndex === evt.newIndex) { return; }
+           var t = nodeTable(), start = t.page.info().start;
+           var pageIds = $('#node_products_table tbody tr').map(function () { return $(this).attr('data-id'); }).get();
+
+           var ordered = block.rows.slice().sort(function (a, b) { return a.sort_order - b.sort_order; });
+           var byId = {};
+           ordered.forEach(function (r) { byId[r.id] = r; });
+           var pageRows = pageIds.map(function (id) { return byId[id]; });
+           Array.prototype.splice.apply(ordered, [start, pageRows.length].concat(pageRows));
+           ordered.forEach(function (r, i) { r.sort_order = i + 1; });
+
+           block.rows = ordered;
+           t.clear().rows.add(block.rows).draw(false);
+           setDirty(true);
+       }
+
+       $(document).on('change', '.block-sort-input', function () {
+           var v = $(this).val().trim(), id = $(this).attr('data-id');
+           if (!/^[1-9]\d*$/.test(v)) {
+               $(this).addClass('is-invalid');
+               setSortStatus('Порядок — целое положительное число', 'text-danger');
+               return;
+           }
+           $(this).removeClass('is-invalid');
+           block.rows.forEach(function (r) { if (String(r.id) === id) { r.sort_order = parseInt(v, 10); } });
+           setDirty(true);
+       });
+
+       $('#node_products_table').on('draw.dt', restoreBlockChecks);
+
+       function sendBlockSort(data) {
+           if (block.busy) { return; }
+           block.busy = true;
+           $('#applyBlockSort, #blockSortResetBtn').prop('disabled', true);
+           refreshDragState();
+           setSortStatus('<i class="fas fa-spinner fa-spin"></i> Сохранение…');
+           data.tree_id = block.treeId;
+           $.ajax({
+               url: "/modules/admin/sortBlockProducts.php",
+               type: "POST",
+               data: data,
+               success: function (resp) {
+                   var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   block.busy = false;
+                   applyNodeData({ block: true, count: r.count, products: r.products });
+                   setSortStatus('<i class="fas fa-check text-success"></i> Сортировка сохранена', 'text-success');
+               },
+               error: function (err) {
+                   block.busy = false;
+                   var r = err.responseJSON || {};
+                   setDirty(block.dirty);
+                   setSortStatus('<i class="fas fa-exclamation-triangle"></i> ' + escHtml(r.error || ('Ошибка ' + err.status)), 'text-danger');
+               },
+               complete: function () {
+                   $('#blockSortResetBtn').prop('disabled', false);
+                   refreshDragState();
+               }
+           });
+       }
+
+       $(document).on('click', '#applyBlockSort', function () {
+           if ($('#node_products_table .block-sort-input.is-invalid').length) {
+               setSortStatus('Исправьте некорректные номера порядка', 'text-danger');
+               return;
+           }
+           var items = block.rows.map(function (r) { return { item_id: r.id, sort_order: parseInt(r.sort_order, 10) }; });
+           sendBlockSort({ items: JSON.stringify(items) });
+       });
+
+       $(document).on('click', '#blockSortResetBtn', function () {
+           var $opt = $('#blockSortReset option:selected');
+           if (!confirm('Сбросить порядок блока «' + block.name + '» (' + $opt.text().toLowerCase() + ')? Ручная сортировка будет потеряна.')) { return; }
+           sendBlockSort({ reset: $opt.val() });
+       });
+
+       /* Выбор товаров блока */
+       $(document).on('change', '.block-check', function () {
+           var id = $(this).attr('data-id');
+           if (this.checked) { block.selected[id] = true; } else { delete block.selected[id]; }
+           restoreBlockChecks();
+       });
+
+       // «Выбрать все» — все строки, подходящие под текущий поиск (на всех страницах)
+       $(document).on('change', '#block_select_all', function () {
+           var checked = this.checked;
+           nodeTable().rows({ search: 'applied' }).data().each(function (row) {
+               if (checked) { block.selected[row.id] = true; } else { delete block.selected[row.id]; }
+           });
+           restoreBlockChecks();
+       });
+
+       function openBlockDeleteModal(mode) {
+           var count = mode === 'all' ? block.rows.length : Object.keys(block.selected).length;
+           if (count === 0) { return; }
+           $('#blockBulkDeleteMode').val(mode);
+           $('#blockBulkDeleteCount').text(count);
+           $('#blockBulkDeleteModalTitle').text(mode === 'all' ? 'Удалить все товары блока «' + block.name + '»' : 'Удалить выбранные товары');
+           $('#blockBulkDeletePhrase').val('');
+           $('#blockBulkDeleteAllConfirm').toggle(mode === 'all');
+           $('#blockBulkUnlinkShared').prop('checked', false);
+           $('#blockBulkDeleteModal').modal('show');
+       }
+
+       $(document).on('click', '#blockDeleteSelected', function () { openBlockDeleteModal('selected'); });
+       $(document).on('click', '#blockDeleteAll', function () { openBlockDeleteModal('all'); });
+
+       function renderBlockDeleteResult(r) {
+           var deleted = (r.deleted || []).length, unlinked = (r.unlinked || []).length, skipped = r.skipped || [];
+           var html = 'Удалено ' + deleted + ' элементов.';
+           if (unlinked) { html += ' Убрано из блока (остались в других блоках): ' + unlinked + '.'; }
+           if (skipped.length) {
+               html += ' ' + skipped.length + ' элементов не удалены:<ul class="mb-0 mt-1">';
+               skipped.forEach(function (s) {
+                   html += '<li>' + escHtml(s.name ? s.name + ' (id ' + s.id + ')' : 'id ' + s.id) + ' — ' + escHtml(s.reason) + '</li>';
+               });
+               html += '</ul>';
+           }
+           $('#blockResult').html(
+               '<div class="alert alert-' + (skipped.length ? 'warning' : 'success') + ' alert-dismissible mb-0">' + html +
+               '<button type="button" class="close" data-dismiss="alert">&times;</button></div>'
+           );
+       }
+
+       $(document).on('click', '#blockBulkDeleteConfirm', function () {
+           if (block.busy) { return; }
+           var mode = $('#blockBulkDeleteMode').val();
+           var data = {
+               tree_id: block.treeId,
+               mode: mode,
+               unlink_shared: $('#blockBulkUnlinkShared').is(':checked') ? 1 : 0
+           };
+           if (mode === 'all') {
+               data.confirm = $('#blockBulkDeletePhrase').val().trim();
+               if (data.confirm.toLowerCase() !== 'удалить все') {
+                   alert('Подтверждение не совпадает. Удаление отменено.');
+                   return;
+               }
+           } else {
+               data.item_ids = JSON.stringify(Object.keys(block.selected).map(Number));
+           }
+           if (block.dirty && !confirm('Несохранённый порядок будет потерян. Продолжить удаление?')) { return; }
+
+           var $btn = $(this);
+           block.busy = true;
+           $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Удаление…');
+           $.ajax({
+               url: "/modules/admin/deleteBlockProducts.php",
+               type: "POST",
+               data: data,
+               success: function (resp) {
+                   var r = (typeof resp === 'string') ? JSON.parse(resp) : resp;
+                   $('#blockBulkDeleteModal').modal('hide');
+                   block.selected = {};
+                   block.busy = false;
+                   applyNodeData({ block: true, count: r.count, products: r.products });
+                   renderBlockDeleteResult(r);
+               },
+               error: function (err) {
+                   var r = err.responseJSON || {};
+                   alert(r.error || err.responseText || ('Ошибка ' + err.status));
+               },
+               complete: function () {
+                   block.busy = false;
+                   $btn.prop('disabled', false).text('Удалить');
+                   updateBlockSelection();
+               }
+           });
        });
 
        // Редактирование товара из списка категорий / отчёта — модалка #exampleModalEditProd
@@ -718,6 +1011,7 @@ $(document).ready(function() {
                                 $('#settingsCategoryModalTitle').text('Настройки: ' + s.name);
                                 $('#uncheck_btn').prop('checked', parseInt(s.uncheck_btn) === 1);
                                 $('#onLoadcountable').prop('checked', parseInt(s.onLoadcountable) === 1);
+                                $('#compat_role').val(s.compat_role || '');
                                 $('#settingsCategoryModal').modal('show');
                             },
                             error: function (err) { alert(err.responseText || ('Ошибка ' + err.status)); }
@@ -923,4 +1217,73 @@ $(document).ready(function() {
         });
     });
 
+});
+
+/* ----- Совместимость: сокет и тип памяти (страница /admin/compat) ----- */
+$(function () {
+    var $table = $('#compat_table');
+    if (!$table.length) { return; }
+
+    function rowMissing($tr) {
+        var noSocket = $tr.attr('data-role') !== 'ram' && !$tr.find('.compat-socket').val();
+        var noMem = $tr.find('.compat-mem:checked').length === 0;
+        // Без права правки полей нет — берём подсветку, выставленную сервером.
+        if (!$tr.find('.compat-mem').length) { return $tr.hasClass('compat-missing'); }
+        return noSocket || noMem;
+    }
+
+    var onlyMissing = false;
+    $.fn.dataTable.ext.search.push(function (settings, data, idx) {
+        if (settings.nTable !== $table[0] || !onlyMissing) { return true; }
+        return $(settings.aoData[idx].nTr).hasClass('compat-missing');
+    });
+
+    var dt = $table.DataTable({ pageLength: 50, lengthMenu: [[20, 50, 100, -1], [20, 50, 100, 'Все']], order: [[2, 'asc'], [1, 'asc']] });
+
+    $('#compatOnlyMissing').on('change', function () { onlyMissing = this.checked; dt.draw(); });
+
+    function updateMissingCount() {
+        var n = 0;
+        dt.rows().nodes().each(function (tr) { if ($(tr).hasClass('compat-missing')) { n++; } });
+        $('#compatMissingCount').text(n).toggleClass('badge-warning', n > 0).toggleClass('badge-success', n === 0);
+    }
+
+    // Сохраняем сразу при изменении поля
+    $table.on('change', '.compat-socket, .compat-mem', function () {
+        var $tr = $(this).closest('tr');
+        var mem = $tr.find('.compat-mem:checked').map(function () { return this.value; }).get();
+        var $ok = $tr.find('.compat-saved').hide();
+        $.ajax({
+            url: '/modules/admin/saveProductCompat.php',
+            type: 'POST',
+            data: { prod_id: $tr.attr('data-id'), socket: $tr.find('.compat-socket').val() || '', mem_type: mem },
+            success: function () {
+                $tr.toggleClass('compat-missing', rowMissing($tr));
+                updateMissingCount();
+                $ok.fadeIn(150).delay(1200).fadeOut(300);
+            },
+            error: function (err) {
+                var r = err.responseJSON || {};
+                alert(r.error || ('Ошибка ' + err.status));
+            }
+        });
+    });
+
+    $('#compatAutofill').on('click', function () {
+        if (!confirm('Заполнить сокет и тип памяти по названиям товаров?\nЗаполняются только пустые поля — ручные значения не меняются.')) { return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: '/modules/admin/compatAutofill.php',
+            type: 'POST',
+            success: function (r) {
+                alert('Заполнено товаров: ' + r.filled + '\nОсталось незаполненных: ' + r.unresolved);
+                window.location.reload();
+            },
+            error: function (err) {
+                var r = err.responseJSON || {};
+                alert(r.error || ('Ошибка ' + err.status));
+            },
+            complete: function () { $btn.prop('disabled', false); }
+        });
+    });
 });

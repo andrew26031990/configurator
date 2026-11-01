@@ -11,7 +11,11 @@ if ($id === null || $id <= 0) {
 }
 
 try {
+    $filter = db_row($mysqli, 'SELECT f_name FROM filters WHERE id = ?', array($id));
     db_exec($mysqli, 'DELETE FROM filters WHERE id = ?', array($id));
+    if ($filter) {
+        audit_log($mysqli, 'filter.delete', "Удалён фильтр «{$filter['f_name']}» (id {$id})", array('ids' => array($id)));
+    }
     echo 'Фильтр успешно удален';
 } catch (Throwable $e) {
     error_log('deleteFilter: ' . $e->getMessage());

@@ -6,7 +6,15 @@ require_capability('products.view');
 $treeId = post_int('tree_id');
 
 if ($treeId === null || $treeId <= 0) {
-    json_out(array('count' => 0, 'products' => array()));
+    json_out(array('count' => 0, 'products' => array(), 'block' => false));
+    return;
+}
+
+// Блок (тип-нода level 3) — товары в порядке витрины, с номером sort_order:
+// на этой ноде в админке доступны сортировка и массовое удаление.
+if (getBlock($mysqli, $treeId)) {
+    $products = getBlockProducts($mysqli, $treeId);
+    json_out(array('count' => count($products), 'products' => $products, 'block' => true));
     return;
 }
 
@@ -27,4 +35,4 @@ $products = db_rows(
     array($treeId)
 );
 
-json_out(array('count' => count($products), 'products' => $products));
+json_out(array('count' => count($products), 'products' => $products, 'block' => false));

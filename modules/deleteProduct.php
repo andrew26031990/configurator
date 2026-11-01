@@ -14,12 +14,19 @@ if ($id === false || $id <= 0) {
 }
 
 try {
+    $product = db_row($mysqli, 'SELECT name, price FROM products WHERE id = ?', array($id));
     db_exec($mysqli, 'DELETE FROM products WHERE id = ?', array($id));
     // Чистим связи товара с категориями, чтобы не оставались висячие строки.
     db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ?', array($id));
     // delete_upload не выпустит за пределы каталога картинок:
     // раньше сюда можно было передать "../../functions.php".
     delete_upload(APP_ROOT . '/configurator/images/products', $image);
+    if ($product) {
+        audit_log($mysqli, 'product.delete', "Удалён товар «{$product['name']}» (id {$id})", array(
+            'ids'     => array($id),
+            'details' => array('name' => $product['name'], 'price' => $product['price']),
+        ));
+    }
     echo 'Товар успешно удален';
 } catch (Throwable $e) {
     error_log('deleteProduct: ' . $e->getMessage());

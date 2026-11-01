@@ -8,13 +8,23 @@ require_capability('products.edit');
 $uploadDir = APP_ROOT . '/configurator/images/products';
 
 /**
- * Перезаписывает связи товара со сборками/типами (tree_prod) по выбору из мультиселекта.
+ * Приводит связи товара со сборками/типами (tree_prod) к выбору из мультиселекта.
+ * Уже существующие связи не трогаем — иначе товар потерял бы место в блоке
+ * (sort_order); новые встают в конец блока.
  */
 function syncProductTrees($mysqli, $prodId, array $treeIds)
 {
-    db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ?', array((int) $prodId));
-    foreach ($treeIds as $tid) {
-        db_exec($mysqli, 'INSERT INTO tree_prod (tree_id, prod_id) VALUES (?, ?)', array((int) $tid, (int) $prodId));
+    $current = getProductTreeIds($mysqli, $prodId);
+
+    foreach (array_diff($current, $treeIds) as $tid) {
+        db_exec($mysqli, 'DELETE FROM tree_prod WHERE prod_id = ? AND tree_id = ?', array((int) $prodId, (int) $tid));
+    }
+    foreach (array_diff($treeIds, $current) as $tid) {
+        db_exec(
+            $mysqli,
+            'INSERT INTO tree_prod (tree_id, prod_id, sort_order) VALUES (?, ?, ?)',
+            array((int) $tid, (int) $prodId, nextBlockSortOrder($mysqli, $tid))
+        );
     }
 }
 
@@ -44,6 +54,30 @@ if ($id === null || $id <= 0 || $name === '' || $description === '' || $price <=
 
 $hasNewImage = isset($_FILES['picture']) && $_FILES['picture']['error'] === UPLOAD_ERR_OK;
 
+// Состояние до правки — для журнала действий.
+$before = db_row($mysqli, 'SELECT name, description, price, f_id FROM products WHERE id = ?', array($id));
+$before = $before ? $before : array();
+$before['tree_ids'] = getProductTreeIds($mysqli, $id);
+sort($before['tree_ids']);
+
+/**
+ * Запись в журнал: что поменялось в товаре.
+ */
+function auditProductUpdate($mysqli, $id, array $before, array $after, $imageChanged)
+{
+    sort($after['tree_ids']);
+    $changes = audit_diff($before, $after);
+    if ($imageChanged) {
+        $changes['image'] = array('было' => '', 'стало' => 'новая картинка');
+    }
+    audit_log($mysqli, 'product.update', "Изменён товар «{$after['name']}» (id {$id})", array(
+        'ids'     => array($id),
+        'details' => array('changes' => $changes),
+    ));
+}
+
+$after = array('name' => $name, 'description' => $description, 'price' => $price, 'f_id' => $filterId, 'tree_ids' => $treeIds);
+
 if (!$hasNewImage) {
     try {
         db_exec(
@@ -52,6 +86,8 @@ if (!$hasNewImage) {
             array($name, $description, $price, $filterId, $id)
         );
         syncProductTrees($mysqli, $id, $treeIds);
+        compat_autofill_product($mysqli, $id);
+        auditProductUpdate($mysqli, $id, $before, $after, false);
         echo 'Данные товара были успешно изменены';
     } catch (Throwable $e) {
         error_log('editProduct: ' . $e->getMessage());
@@ -99,6 +135,8 @@ try {
         delete_upload($uploadDir, $current['image']);
     }
 
+    compat_autofill_product($mysqli, $id);
+    auditProductUpdate($mysqli, $id, $before, $after, true);
     echo 'Товар был успешно отредактирован';
 } catch (Throwable $e) {
     delete_upload($uploadDir, $fileName);

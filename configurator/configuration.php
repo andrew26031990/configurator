@@ -22,6 +22,12 @@
         /* кнопка "Убрать из сборки" — на отдельной строке под заголовком */
         .uncheck-btn { display: block; width: auto; margin: 10px 0 0 0; }
     }
+
+    /* Совместимость: несовместимые с выбором товары — тусклые, с причиной */
+    .main-list li.compat-off { opacity: .45; }
+    .main-list li.compat-off label { cursor: help; }
+    .compat-note { display: block; margin: 2px 0 0 30px; font-size: 12px; line-height: 1.3; color: #e01b22; }
+    .compat-alert { margin: 0 0 15px; padding: 10px 15px; border: 2px solid #e01b22; background: #fff5f5; color: #1A191F; font-size: 14px; }
 </style>
 
 <header class="header header--mobile mobile-only">
@@ -112,7 +118,8 @@
                 ?>
                 <div class="scrollbar-inner">
                     <table class="product-table <?php if ($onLoadcountable == 1) { ?>countable<?php } ?>"
-                           id="<?php echo e($item['translit']); ?>">
+                           id="<?php echo e($item['translit']); ?>"
+                           <?php if (!empty($item['compat_role'])) { ?>data-compat-role="<?php echo e($item['compat_role']); ?>"<?php } ?>>
                         <tbody>
                         <tr>
                             <td class="left-td">
@@ -156,6 +163,7 @@
                                             <li class="all asus">
                                                 <div class="product-block">
                                                     <input type="checkbox" data="<?= e($item['image']); ?>"
+                                                           data-socket="<?= e($item['socket']); ?>" data-mem="<?= e($item['mem_type']); ?>"
                                                            id="<?= e($item['id']); ?>" name="<?= e($translit); ?>"
                                                            value="<?php echo e($item['price']); ?>"/>
                                                     <label for="<?= e($item['id']); ?>"

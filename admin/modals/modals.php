@@ -27,4 +27,6 @@
 <!--End Add Sborka Modal-->
 <!-- User Modal-->
 <?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalUser.php'); ?>
-<!--End User Modal-->
+<!--End User Modal--><!-- Block Bulk Delete Modal-->
+<?php include($_SERVER['DOCUMENT_ROOT'].'/admin/modals/modalBlockBulkDelete.php'); ?>
+<!--End Block Bulk Delete Modal-->

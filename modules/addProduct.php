@@ -70,12 +70,18 @@ try {
     foreach ($treeIds as $tid) {
         db_exec(
             $mysqli,
-            'INSERT INTO `tree_prod` (`tree_id`, `prod_id`) VALUES (?, ?)',
-            array($tid, $prodId)
+            'INSERT INTO `tree_prod` (`tree_id`, `prod_id`, `sort_order`) VALUES (?, ?, ?)',
+            array($tid, $prodId, nextBlockSortOrder($mysqli, $tid))
         );
     }
 
     $mysqli->commit();
+    compat_autofill_product($mysqli, $prodId);
+
+    audit_log($mysqli, 'product.create', "Добавлен товар «{$name}» (id {$prodId})", array(
+        'ids'     => array($prodId),
+        'details' => array('price' => $price, 'f_id' => $filterId, 'tree_ids' => $treeIds),
+    ));
     echo 'Товар успешно добавлен в базу, связь добавлена';
 } catch (Throwable $e) {
     $mysqli->rollback();

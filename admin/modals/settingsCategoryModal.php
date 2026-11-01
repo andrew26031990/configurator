@@ -16,11 +16,24 @@
                         Показывать кнопку «Убрать» (управление кнопкой "Убрать")
                     </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" value="1" id="onLoadcountable">
                     <label class="form-check-label" for="onLoadcountable">
                         Автодобавление в конфигурацию товара из данного типа товара
                     </label>
+                </div>
+                <div class="form-group mb-0">
+                    <label for="compat_role" class="mb-1">Роль для совместимости</label>
+                    <select id="compat_role" class="custom-select">
+                        <option value="">— не участвует —</option>
+                        <?php foreach (compat_roles() as $code => $label) { ?>
+                            <option value="<?php echo e($code); ?>"><?php echo e($label); ?></option>
+                        <?php } ?>
+                    </select>
+                    <small class="form-text text-muted">
+                        Блоки с ролью «Материнская плата», «Процессор» и «ОЗУ» проверяются на совместимость
+                        по сокету и типу памяти (заполняются на странице «Совместимость»).
+                    </small>
                 </div>
             </div>
             <div class="modal-footer">

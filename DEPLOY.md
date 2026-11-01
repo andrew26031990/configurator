@@ -37,6 +37,7 @@ rm -f modules/error_log modules/products/error_log
 rm -f modules/addCategory.php modules/addTypes.php modules/removeCategory.php
 rm -f modules/modals.php modules/admin/getProducts.php
 rm -rf modules/Controllers
+rm -f modules/recordOrderToDB.php   # запись заявки теперь внутри mail.php; старый файл — SQL-инъекция
 ```
 
 ## 5. Залить `.htaccess` в каталог загрузок вручную
@@ -53,6 +54,10 @@ rm -rf modules/Controllers
 - [ ] «Сохранить в PDF» отдаёт файл
 - [ ] Ссылка на конфигурацию открывается с проставленными галочками
 - [ ] Заявка «Купить» приходит в Telegram и появляется в `orders`
+      (не раньше чем через 3 секунды после открытия страницы — см. «Защита формы заказа»)
+- [ ] `curl https://configurator.pcmarket.uz/modules/mail.php` → `405`, в Telegram ничего не пришло
+- [ ] `curl -X POST https://configurator.pcmarket.uz/modules/mail.php` → `400`, в Telegram ничего не пришло
+- [ ] `https://configurator.pcmarket.uz/modules/recordOrderToDB.php` → 404
 - [ ] Вход в админку работает, повторный вход тоже (проверка перехода на bcrypt)
 - [ ] В админке: добавление и правка товара с картинкой, дерево категорий
 - [ ] **Главное:** `curl -X POST https://configurator.pcmarket.uz/modules/deleteProduct.php -d "prod_id=999999:x.jpg"`
@@ -170,6 +175,33 @@ escape-hatch, обычно не нужен).
 ```bash
 php tests/mail_test.php
 ```
+
+## Защита формы заказа
+
+Пустые заявки «no_name / phone» в Telegram-канале — это запросы к
+`modules/mail.php` без данных формы (сканеры уязвимостей, роботы): старый код
+подставлял заглушки и всё равно отправлял сообщение. Теперь `mail.php`:
+
+- принимает только POST, пустые и неполные запросы отбрасывает;
+- проверяет скрытое поле-ловушку `website` и подписанную метку времени
+  открытия страницы `order_token` (форма, отправленная быстрее 3 секунд, —
+  бот). Ботам в этих двух случаях отвечаем «успехом», но заявку никуда не
+  шлём — чтобы не подбирали обход;
+- проверяет имя и телефон (`+998 XX XXX-XX-XX`);
+- **состав и сумму сборки берёт из базы** по ссылке на сборку (`sborkaLink`),
+  а не из присланного текста: подделать цену или прислать заявку без реальных
+  товаров нельзя. Ссылка должна вести на этот же сайт;
+- ограничивает заявки по IP: не чаще раза в 30 секунд и не больше 5 в сутки
+  (`order.min_interval`, `order.max_per_day` в `config.local.php`; счётчик —
+  `storage/order_limits.json`, IP хранится хешем). Прежний лимит жил в сессии
+  и не действовал на ботов без cookie;
+- сам пишет заявку в `orders` — отдельный `recordOrderToDB.php` удалён.
+
+Все отказы пишутся в `error_log` строкой `order rejected (<причина>) ip=…` —
+по ним видно, что именно отсекается: `grep "order rejected" error_log | sort | uniq -c`.
+
+Секрет подписи метки — `order.secret` в `config.local.php` (любая длинная
+случайная строка). Если не задан, выводится из доступа к базе.
 
 ## Переключатель reCAPTCHA
 

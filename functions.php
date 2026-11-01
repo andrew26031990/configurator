@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/permissions.php';
+require_once __DIR__ . '/order.php';
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -673,4 +674,59 @@ function exit_cab()
         $_SESSION = array();
         session_destroy();
     }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Заявки из конфигуратора                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Секрет для подписи метки времени формы заказа.
+ * order.secret в config.local.php; если не задан — производный от доступа к базе
+ * (он и так секретный и на каждом окружении свой).
+ */
+function order_form_secret()
+{
+    $secret = (string) config_get('order.secret', '');
+    if ($secret !== '' && $secret !== 'CHANGE_ME') {
+        return $secret;
+    }
+    return hash('sha256', 'order-form|' . config_get('db.pass') . '|' . config_get('db.name') . '|' . APP_ROOT);
+}
+
+/**
+ * Лимит заявок с одного IP (не по сессии: бот без cookie обошёл бы сессионный).
+ * Хранится в storage/order_limits.json, сам IP — только хешем.
+ */
+function order_rate_allow()
+{
+    $ip  = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    $key = hash('sha256', 'order|' . $ip);
+
+    $fh = @fopen(storage_path('order_limits.json'), 'c+');
+    if (!$fh) {
+        // Хранилище недоступно — не блокируем живых клиентов, но фиксируем проблему.
+        error_log('order: storage/order_limits.json недоступен');
+        return true;
+    }
+
+    flock($fh, LOCK_EX);
+    $data = json_decode((string) stream_get_contents($fh), true);
+
+    list($ok, $data) = order_rate_check(
+        is_array($data) ? $data : array(),
+        $key,
+        time(),
+        (int) config_get('order.min_interval', 30),
+        (int) config_get('order.max_per_day', 5)
+    );
+
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($data));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+
+    return $ok;
 }

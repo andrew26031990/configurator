@@ -348,6 +348,12 @@
                 <input type="text" id="email" placeholder="E-mail" required>
             </div>
             <input type="hidden" id="sborka" value="<?php echo e($link); ?>">
+            <input type="hidden" id="order_token" value="<?php echo e(order_token_make(order_form_secret(), time())); ?>">
+            <!-- Ловушка для ботов: поле скрыто от людей, заполненное — заявка отбрасывается -->
+            <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                <label for="website">Не заполняйте это поле</label>
+                <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
             <div class="input-holder">
                 <button type="submit" class="button send_config">Отправить</button>
             </div>

@@ -288,17 +288,23 @@ $("#modal_2 button[type=submit]").click(function (e) {
       $.ajax({
         url: "../../modules/mail.php",
         type: "POST",
-        data: { name: name, phone: phone, config: config, amount: amount, email: email, sborka: sborka, sborkaLink: sborkaLink },
+        // Состав и сумму сервер берёт из sborkaLink по базе; order_token и website — защита от ботов.
+        data: {
+          name: name, phone: phone, email: email, sborka: sborka, sborkaLink: sborkaLink,
+          order_token: $("#modal_2 #order_token").val(), website: $("#modal_2 #website").val()
+        },
         beforeSend: function() {
-
+          $("#modal_2 button[type=submit]").prop("disabled", true);
         },
         success: function (response) {
           alert(response);
-          recordOrderToDB(name, email, phone, sborka, amount);
-          //$("#modal_2 #name").val("");
-          //$("#modal_2 #phone").val("");
-          //$("#modal_2 #email").val("");
           $("#modal_2 button[class='mfp-close']").click();
+        },
+        error: function (xhr) {
+          alert(xhr.responseText || "Не удалось отправить заявку. Попробуйте ещё раз или позвоните нам.");
+        },
+        complete: function () {
+          $("#modal_2 button[type=submit]").prop("disabled", false);
         },
       });
     }else{
@@ -309,16 +315,6 @@ $("#modal_2 button[type=submit]").click(function (e) {
 
 
 
-function recordOrderToDB(name, email, phone, sborka, amount){
-  $.ajax({
-    url: "../modules/recordOrderToDB.php",
-    type: "POST",
-    data: { name: name, phone: phone, amount: amount, email: email, sborka: sborka },
-    success: function (response) {
-      console.log(response);
-    },
-  });
-}
 
 
 $(document).ready(function ($) {

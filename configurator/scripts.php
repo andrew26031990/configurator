@@ -3,7 +3,7 @@
 <script src="configurator/js/owl.carousel.min.js"></script>
 <script src="https://dimsemenov.com/plugins/magnific-popup/dist/jquery.magnific-popup.min.js?v=1.1.0"></script>
 <!--<script src="js/minibar.min.js"></script>-->
-<script src="configurator/js/main.js"></script>
+<script src="configurator/js/main.js?v=<?php echo @filemtime(__DIR__ . '/js/main.js'); ?>"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/3.2.6/jquery.inputmask.bundle.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
